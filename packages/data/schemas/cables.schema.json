@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CableCatalogueAmpacities",
+  "description": "Elsewedy Cables 0.6/1(1.2)kV LV catalogue ampacity and outer diameter data",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "description": "Cable sizes in mm2 mapped to installation ampacities and diameter",
+    "patternProperties": {
+      "^[0-9]+(\\.[0-9]+)?$": {
+        "type": "object",
+        "properties": {
+          "ground": { "type": "number", "description": "Ampacity when direct buried in ground (A)" },
+          "duct": { "type": "number", "description": "Ampacity when laid in single-way duct (A)" },
+          "air": { "type": "number", "description": "Ampacity in free air / shaded tray (A)" },
+          "dia": { "type": "number", "description": "Approximate overall outer diameter (mm)" }
+        },
+        "required": ["ground", "duct", "air", "dia"],
+        "additionalProperties": false
+      }
+    }
+  }
+}

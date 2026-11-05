@@ -1,0 +1,323 @@
+:root {
+  --bg: #0E1A24;
+  --panel: #142A38;
+  --panel-2: #0F2129;
+  --panel-hover: #193445;
+  --grid: #1F3F4E;
+  --amber: #E8A33D;
+  --amber-dim: #7A5A26;
+  --teal: #4FB3A9;
+  --teal-dim: #1D544F;
+  --text: #E9E4D8;
+  --text-dim: #8FA4AE;
+  --danger: #D1603D;
+  --success: #20E8A2;
+  --radius: 4px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background:
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 100% 28px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 28px 100%,
+    var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+code, pre, .mono {
+  font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--panel-2);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--grid);
+  border-radius: var(--radius);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--teal-dim);
+}
+
+/* Common Components */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--grid);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 14px;
+}
+
+.btn {
+  background: var(--amber);
+  color: #1A1104;
+  border: none;
+  padding: 8px 16px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+  border-radius: var(--radius);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: filter 0.15s, background-color 0.15s;
+}
+.btn:hover {
+  filter: brightness(1.08);
+}
+.btn.secondary {
+  background: transparent;
+  border: 1px solid var(--amber-dim);
+  color: var(--amber);
+}
+.btn.secondary:hover {
+  background: rgba(232, 163, 61, 0.1);
+}
+.btn.teal {
+  background: var(--teal);
+  color: #06201D;
+}
+.btn.danger {
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+.btn.danger:hover {
+  background: rgba(209, 96, 61, 0.15);
+}
+
+.section-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px;
+  color: var(--teal);
+  letter-spacing: 0.5px;
+  margin: 20px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--grid);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+.field label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.field label .unit {
+  color: var(--amber);
+  font-family: 'IBM Plex Mono', monospace;
+}
+.field input, .field select, .field textarea {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--grid);
+  color: var(--text);
+  padding: 8px 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  border-radius: var(--radius);
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none;
+  border-color: var(--amber);
+}
+
+.toggle-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.toggle-btn {
+  flex: 1;
+  min-width: 90px;
+  background: var(--panel-2);
+  border: 1px solid var(--grid);
+  color: var(--text-dim);
+  padding: 8px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: var(--radius);
+  font-family: 'Space Grotesk', sans-serif;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.toggle-btn:hover {
+  color: var(--text);
+  background: var(--panel-hover);
+}
+.toggle-btn.active {
+  background: var(--teal);
+  color: #06201D;
+  border-color: var(--teal);
+  font-weight: 700;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.hero-box {
+  background: var(--panel-2);
+  border: 1px solid var(--grid);
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: center;
+}
+.hero-box .lbl {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.hero-box .val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--amber);
+}
+.hero-box .val .u {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.notes {
+  background: var(--panel-2);
+  border-left: 3px solid var(--teal);
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.warn {
+  background: rgba(209, 96, 61, 0.12);
+  border-left: 3px solid var(--danger);
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #E8B7A4;
+  margin-bottom: 12px;
+}
+
+/* RTL Support */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+[dir="rtl"] .mono,
+[dir="rtl"] code,
+[dir="rtl"] .val,
+[dir="rtl"] .unit,
+[dir="rtl"] input[type="number"],
+[dir="rtl"] .cad-tag-box {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: embed;
+}
+[dir="rtl"] .titleblock-main {
+  border-right: none;
+  border-left: 1px solid var(--grid);
+}
+
+/* Print Stylesheet for Engineering Calculation Report */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  /* Hide non-printable application shell elements */
+  .no-print,
+  .sidebar-tree,
+  .toolbar-actions,
+  button,
+  .remove-btn,
+  .add-btn,
+  .toast-container {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .print-report-container {
+    display: block !important;
+    background: #ffffff !important;
+    color: #111111 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+  .print-report-container .card {
+    background: #ffffff !important;
+    border: 1px solid #333333 !important;
+    color: #111111 !important;
+    page-break-inside: avoid;
+    margin-bottom: 15px;
+    box-shadow: none !important;
+  }
+  .print-report-container .section-title {
+    color: #0b4f6c !important;
+    font-weight: 700 !important;
+    border-bottom: 2px solid #0b4f6c !important;
+  }
+  .print-report-container .hero-box {
+    background: #f7f9fa !important;
+    border: 1px solid #999999 !important;
+  }
+  .print-report-container .hero-box .val {
+    color: #000000 !important;
+  }
+  .print-report-container .hero-box .lbl {
+    color: #444444 !important;
+  }
+  .print-report-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  .print-report-container th,
+  .print-report-container td {
+    border: 1px solid #cccccc;
+    padding: 6px 10px;
+    color: #111111;
+  }
+  .print-report-container th {
+    background: #eaeaea;
+    font-weight: bold;
+  }
+}
+

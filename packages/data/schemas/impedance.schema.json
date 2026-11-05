@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CableImpedanceData",
+  "description": "IEC 60228 / Elsewedy Cables AC resistance and reactance data at maximum operating temperature",
+  "type": "object",
+  "properties": {
+    "cu": {
+      "type": "object",
+      "description": "Copper conductors indexed by cross-section size in mm2",
+      "patternProperties": {
+        "^[0-9]+(\\.[0-9]+)?$": {
+          "type": "object",
+          "properties": {
+            "r_pvc": { "type": "number", "description": "AC resistance at 70°C for PVC insulation (Ω/km)" },
+            "r_xlpe": { "type": "number", "description": "AC resistance at 90°C for XLPE insulation (Ω/km)" },
+            "x": { "type": "number", "description": "Reactance at 50Hz (Ω/km)" }
+          },
+          "required": ["r_pvc", "r_xlpe", "x"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "al": {
+      "type": "object",
+      "description": "Aluminium conductors indexed by cross-section size in mm2",
+      "patternProperties": {
+        "^[0-9]+(\\.[0-9]+)?$": {
+          "type": "object",
+          "properties": {
+            "r_pvc": { "type": "number", "description": "AC resistance at 70°C for PVC insulation (Ω/km)" },
+            "r_xlpe": { "type": "number", "description": "AC resistance at 90°C for XLPE insulation (Ω/km)" },
+            "x": { "type": "number", "description": "Reactance at 50Hz (Ω/km)" }
+          },
+          "required": ["r_pvc", "r_xlpe", "x"],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "required": ["cu", "al"],
+  "additionalProperties": false
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@panel-analyzer/data",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./cables.json": "./src/cables.json",
+    "./impedance.json": "./src/impedance.json",
+    "./standards.json": "./src/standards.json"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {}
+}

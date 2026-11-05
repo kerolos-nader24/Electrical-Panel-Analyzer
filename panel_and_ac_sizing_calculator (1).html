@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Electrical Panel &amp; HVAC Sizing Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0E1A24;
+    --panel: #142A38;
+    --panel-2: #0F2129;
+    --grid: #1F3F4E;
+    --amber: #E8A33D;
+    --amber-dim: #7A5A26;
+    --teal: #4FB3A9;
+    --text: #E9E4D8;
+    --text-dim: #8FA4AE;
+    --danger: #D1603D;
+    --radius: 3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0/100% 28px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/28px 100%,
+      var(--bg);
+    color:var(--text);
+    font-family:'Space Grotesk',sans-serif;
+    line-height:1.6;
+    min-height:100vh;
+    padding: 24px 16px 80px;
+  }
+  .wrap{max-width:1020px;margin:0 auto;}
+
+  .titleblock{
+    border:1px solid var(--grid);
+    background:var(--panel);
+    display:grid;
+    grid-template-columns: 1fr auto;
+    margin-bottom:22px;
+  }
+  .titleblock-main{padding:22px 24px;border-right:1px solid var(--grid);}
+  .titleblock-main .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--teal);margin-bottom:8px;}
+  .titleblock-main h1{margin:0 0 6px;font-size:24px;font-weight:700;color:var(--text);}
+  .titleblock-main p{margin:0;color:var(--text-dim);font-size:13.5px;max-width:560px;}
+  .titleblock-stamp{padding:22px 20px;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:'IBM Plex Mono',monospace;min-width:150px;text-align:center;}
+  .titleblock-stamp .num{font-size:26px;font-weight:700;color:var(--amber);border:2px solid var(--amber-dim);border-radius:50%;width:60px;height:60px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;}
+  .titleblock-stamp .cap{font-size:10.5px;color:var(--text-dim);}
+
+  .tabs{display:flex;gap:2px;margin-bottom:20px;flex-wrap:wrap;}
+  .tab{flex:1;min-width:130px;background:var(--panel-2);border:1px solid var(--grid);color:var(--text-dim);padding:12px 10px;font-size:13.5px;font-weight:700;cursor:pointer;text-align:center;transition:background .15s,color .15s;}
+  .tab.active{background:var(--amber);color:#1A1104;border-color:var(--amber);}
+  .tab:hover:not(.active){color:var(--text);}
+
+  .panel{display:none;}
+  .panel.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .section-title{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--teal);letter-spacing:.5px;margin:26px 0 10px;display:flex;align-items:center;gap:8px;text-transform:uppercase;}
+  .section-title::after{content:'';flex:1;height:1px;background:var(--grid);}
+
+  .card{background:var(--panel);border:1px solid var(--grid);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;}
+
+  .field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;}
+  .field label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:6px;}
+  .field label .unit{color:var(--amber);font-family:'IBM Plex Mono',monospace;}
+  .field input, .field select{width:100%;background:var(--panel-2);border:1px solid var(--grid);color:var(--text);padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13.5px;border-radius:var(--radius);}
+  .field input:focus, .field select:focus{outline:none;border-color:var(--amber);}
+
+  .input-with-unit{display:flex;gap:8px;}
+  .input-with-unit input{flex:1;min-width:0;}
+  .input-with-unit select.unit-select{width:auto;flex:0 0 78px;color:var(--amber);font-weight:600;cursor:pointer;}
+
+  .meter{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:14px 0;border-top:1px solid var(--grid);}
+  .meter:first-of-type{border-top:none;}
+  .meter-label{font-size:13.5px;color:var(--text);}
+  .meter-note{font-size:11.5px;color:var(--text-dim);margin-top:3px;max-width:500px;}
+  .meter-value{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:700;color:var(--amber);white-space:nowrap;}
+  .meter-value .u{font-size:11.5px;color:var(--text-dim);margin-left:4px;}
+
+  .notes{background:var(--panel-2);border-left:3px solid var(--teal);padding:12px 16px;font-size:12px;color:var(--text-dim);margin-top:10px;}
+  .notes ul{margin:6px 0 0;padding-left:18px;}
+  .notes li{margin-bottom:4px;}
+  .warn{background:rgba(209,96,61,.12);border-left:3px solid var(--danger);padding:12px 16px;font-size:12.5px;color:#E8B7A4;margin-bottom:16px;}
+  .flag{background:var(--panel-2);border-left:3px solid var(--amber);padding:8px 14px;font-size:12px;color:var(--text-dim);margin-bottom:14px;font-family:'IBM Plex Mono',monospace;}
+
+  .load-row{background:var(--panel-2);border:1px solid var(--grid);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;}
+  .load-row-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .load-row-head .tag-select{background:var(--panel);border:1px solid var(--grid);color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11.5px;padding:4px 8px;border-radius:3px;}
+  .remove-btn{background:none;border:1px solid var(--grid);color:var(--text-dim);padding:4px 10px;font-size:11.5px;cursor:pointer;border-radius:var(--radius);}
+  .remove-btn:hover{color:var(--danger);border-color:var(--danger);}
+
+  .btn{background:var(--amber);color:#1A1104;border:none;padding:11px 18px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;border-radius:var(--radius);}
+  .btn:hover{filter:brightness(1.08);}
+  .btn.secondary{background:transparent;border:1px solid var(--amber-dim);color:var(--amber);}
+
+  .toggle-row{display:flex;gap:8px;margin-bottom:4px;flex-wrap:wrap;}
+  .toggle-btn{flex:1;min-width:110px;background:var(--panel-2);border:1px solid var(--grid);color:var(--text-dim);padding:8px;font-size:12px;cursor:pointer;border-radius:var(--radius);font-family:'Space Grotesk',sans-serif;}
+  .toggle-btn.active{background:var(--teal);color:#06201D;border-color:var(--teal);}
+
+  .result-hero{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:6px;}
+  .hero-box{flex:1;min-width:160px;background:var(--panel-2);border:1px solid var(--grid);border-radius:var(--radius);padding:16px;text-align:center;}
+  .hero-box .lbl{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-family:'IBM Plex Mono',monospace;}
+  .hero-box .val{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;color:var(--amber);}
+  .hero-box .val .u{font-size:13px;color:var(--text-dim);}
+
+  footer{text-align:center;color:var(--text-dim);font-size:11px;margin-top:40px;font-family:'IBM Plex Mono',monospace;}
+
+  @media (max-width:640px){
+    .titleblock{grid-template-columns:1fr;}
+    .titleblock-main{border-right:none;border-bottom:1px solid var(--grid);}
+    .titleblock-stamp{flex-direction:row;align-items:center;gap:12px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="titleblock">
+    <div class="titleblock-main">
+      <div class="eyebrow">NEC ART. 440 + PANEL &amp; CABLE WORKSHEET</div>
+      <h1>Electrical Panel &amp; HVAC Sizing Calculator</h1>
+      <p>Size disconnects, protection devices, conductors and controllers for AC/refrigeration loads per NEC 440, then size a distribution panel's main breaker and cable (Elsewedy Cables 0.6/1kV LV catalogue ampacity tables).</p>
+    </div>
+    <div class="titleblock-stamp">
+      <div class="num">440</div>
+      <div class="cap">HVAC / PANELS</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="single">Single Motor-Compressor</div>
+    <div class="tab" data-tab="combo">Combination AC Loads</div>
+    <div class="tab" data-tab="room">Room A/C Unit</div>
+    <div class="tab" data-tab="board">Panel &amp; Cable Sizing</div>
+  </div>
+
+  <!-- ============ SINGLE MOTOR TAB ============ -->
+  <div class="panel active" id="panel-single">
+
+    <div class="flag">Sizing an entire distribution panel? Switch to <a href="javascript:void(0)" onclick="switchToHvacPanelCalc()" style="color:var(--amber);text-decoration:underline;font-weight:600;">HVAC Panel Main Breaker Calculation</a> in Panel &amp; Cable Sizing.</div>
+
+    <div class="section-title">Load data</div>
+    <div class="card">
+      <div class="field-grid">
+        <div class="field"><label>Rated-Load Current, RLC <span class="unit">(A)</span></label>
+          <input type="number" id="s-rlc" min="0" step="0.1" placeholder="e.g. 24"></div>
+        <div class="field"><label>Branch-Circuit Selection Current, BSC <span class="unit">(A)</span> — leave blank if not marked</label>
+          <input type="number" id="s-bsc" min="0" step="0.1" placeholder="optional"></div>
+        <div class="field"><label>Locked-Rotor Current, LRC <span class="unit">(A)</span></label>
+          <input type="number" id="s-lrc" min="0" step="0.1" placeholder="e.g. 130"></div>
+        <div class="field"><label>Minimum Circuit Ampacity, MCA (nameplate) <span class="unit">(A)</span> — if marked</label>
+          <input type="number" id="s-mca" min="0" step="0.1" placeholder="optional"></div>
+      </div>
+    </div>
+
+    <div class="section-title">1 — Disconnecting means</div>
+    <div class="card" id="s-out-disc"></div>
+
+    <div class="section-title">2 — Short-circuit &amp; ground-fault protection (OCPD)</div>
+    <div class="card" id="s-out-ocpd"></div>
+
+    <div class="section-title">3 — Branch-circuit conductors</div>
+    <div class="card" id="s-out-cond"></div>
+
+    <div class="section-title">4 — Controller</div>
+    <div class="card" id="s-out-ctrl"></div>
+
+    <div class="section-title">5 — Overload protection</div>
+    <div class="card" id="s-out-ovl"></div>
+
+  </div>
+
+  <!-- ============ COMBINATION LOADS TAB ============ -->
+  <div class="panel" id="panel-combo">
+
+    <div class="flag">Sizing an entire distribution panel? Switch to <a href="javascript:void(0)" onclick="switchToHvacPanelCalc()" style="color:var(--amber);text-decoration:underline;font-weight:600;">HVAC Panel Main Breaker Calculation</a> in Panel &amp; Cable Sizing.</div>
+    <div class="warn">Use this for a circuit that feeds more than one compressor/motor/load. Add each load below; results update automatically.</div>
+
+    <div class="section-title">Load list</div>
+    <div id="load-rows"></div>
+    <button class="btn secondary" id="add-row-btn" type="button">+ Add load</button>
+
+    <div class="section-title">1 — Disconnecting means / controller</div>
+    <div class="card" id="c-out-disc"></div>
+
+    <div class="section-title">2 — OCPD (short-circuit &amp; ground-fault protection)</div>
+    <div class="card" id="c-out-ocpd"></div>
+
+    <div class="section-title">3 — Branch-circuit conductors</div>
+    <div class="card" id="c-out-cond"></div>
+
+    <div class="section-title">4 — Overload protection per motor-compressor</div>
+    <div class="card" id="c-out-ovl"></div>
+
+  </div>
+
+  <!-- ============ ROOM AC TAB ============ -->
+  <div class="panel" id="panel-room">
+    <div class="section-title">Room A/C unit data</div>
+    <div class="card">
+      <div class="field-grid">
+        <div class="field"><label>Nameplate rated current <span class="unit">(A)</span></label>
+          <input type="number" id="r-rating" min="0" step="0.1" placeholder="e.g. 12"></div>
+        <div class="field"><label>Will other loads share this circuit?</label>
+          <div class="toggle-row">
+            <button class="toggle-btn active" id="r-toggle-no" type="button">No — sole load</button>
+            <button class="toggle-btn" id="r-toggle-yes" type="button">Yes — general-use receptacle</button>
+          </div>
+        </div>
+      </div>
+      <div class="notes">These simplified rules apply only to single-phase room A/C units rated under 40A, 250V. Three-phase or &gt;250V units must follow the general NEC 440 rules — see "Single Motor-Compressor" tab.</div>
+    </div>
+
+    <div class="section-title">Results</div>
+    <div class="card" id="r-out"></div>
+
+    <div class="section-title">Fixed reference notes (not calculated)</div>
+    <div class="card">
+      <div class="meter"><div><div class="meter-label">Disconnecting means</div>
+        <div class="meter-note">An attachment plug and receptacle may serve as the sole disconnecting means if the manual controls are within 1.8 m (6 ft) of the floor, or an approved manual switch is installed in sight of the unit.</div></div></div>
+      <div class="meter"><div><div class="meter-label">Supply-cord protection</div>
+        <div class="meter-note">The manufacturer must fit a Leakage-Current Detector-Interrupter (LCDI), Arc-Fault Circuit Interrupter (AFCI), or Heat-Detecting Circuit Interrupter (HDCI), integral to the plug or within 300 mm of it.</div></div></div>
+    </div>
+  </div>
+
+  <!-- ============ PANEL & CABLE TAB ============ -->
+  <div class="panel" id="panel-board">
+
+    <div class="section-title">1 — Panel type</div>
+    <div class="card">
+      <div class="toggle-row">
+        <button class="toggle-btn active" data-ptype="lighting" type="button">Lighting / Normal panel</button>
+        <button class="toggle-btn" data-ptype="power" type="button">General power panel</button>
+        <button class="toggle-btn" data-ptype="ac" type="button">A/C &amp; refrigeration panel</button>
+        <button class="toggle-btn" data-ptype="motors" type="button">Motors panel (MCC)</button>
+      </div>
+      <div class="notes" id="ptype-note"></div>
+      <div id="hvac-mode-wrap" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--grid);">
+        <label style="display:block;font-size:12px;color:var(--text-dim);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">HVAC Calculation Mode</label>
+        <div class="toggle-row">
+          <button class="toggle-btn" id="btn-hvac-existing" type="button">Existing HVAC calculation</button>
+          <button class="toggle-btn active" id="btn-hvac-panel" type="button">HVAC Panel Main Breaker Calculation</button>
+        </div>
+      </div>
+      <div id="motors-mode-wrap" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--grid);">
+        <label style="display:block;font-size:12px;color:var(--text-dim);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Motors Panel (MCC) Sizing Mode</label>
+        <div class="toggle-row">
+          <button class="toggle-btn active" id="btn-motors-panel" type="button">Motors Panel Main Breaker Calculation (Total Load)</button>
+          <button class="toggle-btn" id="btn-motors-existing" type="button">Motors Circuit Schedule (NEC 430.24)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">2 — System</div>
+    <div class="card">
+      <div class="toggle-row">
+        <button class="toggle-btn" data-sys="1p" type="button">Single-phase (1P+N)</button>
+        <button class="toggle-btn active" data-sys="3pn" type="button">Three-phase (3P+N)</button>
+        <button class="toggle-btn" data-sys="3p" type="button">Three-phase (3P, no neutral)</button>
+      </div>
+      <div class="field-grid" style="margin-top:14px;">
+        <div class="field"><label>System voltage <span class="unit">(V)</span></label>
+          <input type="number" id="b-voltage" value="380" placeholder="e.g. 380 or 230"></div>
+      </div>
+    </div>
+
+    <!-- Lighting/Power inputs -->
+    <div id="lp-inputs">
+      <div class="section-title">3 — Connected load</div>
+      <div class="card">
+        <div class="field-grid">
+          <div class="field"><label>Total connected load</label>
+            <div class="input-with-unit">
+              <input type="number" id="b-kw" min="0" step="0.1" value="6" placeholder="e.g. 6">
+              <select id="b-kw-unit" class="unit-select">
+                <option value="kva" selected>kVA</option>
+                <option value="kw">kW</option>
+                <option value="w">W</option>
+                <option value="va">VA</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>Demand / diversity factor <span class="unit">(0–1)</span></label>
+            <input type="number" id="b-df" min="0.1" max="1" step="0.05" value="1.0">
+            <div style="font-size:11px;color:var(--text-dim);margin-top:5px;display:flex;align-items:center;gap:6px;">
+              <input type="checkbox" id="b-df-enable" style="cursor:pointer;">
+              <label for="b-df-enable" style="cursor:pointer;margin:0;font-weight:normal;color:var(--text-dim);">Apply Demand Factor</label>
+            </div>
+          </div>
+          <div class="field" id="b-pf-field"><label>Power factor <span class="unit">(0–1)</span> <span id="pf-status-badge" style="font-size:11px;color:var(--text-dim);font-weight:normal;">(Not used for kVA)</span></label>
+            <input type="number" id="b-pf" min="0.5" max="1" step="0.01" value="0.9">
+          </div>
+        </div>
+        <div class="notes" id="lp-notes">When the load is entered in kVA, current is calculated directly from apparent power: <code>Ib = (S × 1000) / (√3 × V)</code> (3-Phase) or <code>(S × 1000) / V</code> (1-Phase). Power Factor is NOT used for kVA. Demand factor is only applied when enabled or set below 1.0.</div>
+      </div>
+    </div>
+
+    <!-- AC/Motors inputs -->
+    <div id="mc-inputs" style="display:none;">
+      <div class="section-title">3 — Circuits on this panel</div>
+      <div id="board-rows"></div>
+      <button class="btn secondary" id="add-board-row-btn" type="button">+ Add circuit</button>
+      <div class="notes">Feeder sizing uses NEC 430.24: 125% of the largest unit's FLA/RLC + the sum of the rated currents of every other unit on the panel.</div>
+    </div>
+
+    <!-- HVAC Panel Main Breaker inputs -->
+    <div id="hvac-panel-inputs" style="display:none;">
+      <div class="section-title">3 — HVAC Panel Load</div>
+      <div class="card">
+        <div class="field-grid">
+          <div class="field">
+            <label>Panel Load <span class="unit">(kVA)</span></label>
+            <input type="number" id="hvac-panel-kva" min="0" step="0.1" value="62" placeholder="e.g. 62">
+          </div>
+          <div class="field">
+            <label>Voltage <span class="unit">(V)</span></label>
+            <input type="number" id="hvac-panel-voltage" min="0" step="1" value="380" placeholder="e.g. 380">
+          </div>
+          <div class="field">
+            <label>Phase</label>
+            <select id="hvac-panel-phase">
+              <option value="3p">3 Phase (3P)</option>
+              <option value="3pn" selected>3 Phase + Neutral (3P+N)</option>
+              <option value="1p">Single Phase (1P+N)</option>
+            </select>
+          </div>
+        </div>
+        <div class="notes">HVAC Panel Main Breaker Calculation: calculates main breaker using total panel load in kVA. <code>I = S × 1000 / (√3 × V)</code> for 3-phase (or <code>S × 1000 / V</code> for 1-phase). Main breaker is selected with a 125% safety factor (<code>I_125 = I × 1.25</code>), and feeder cable ampacity is sized at <code>Breaker / 0.80</code> from Elsewedy Cables LV catalogue.</div>
+      </div>
+    </div>
+
+    <!-- Motors Panel Main Breaker inputs -->
+    <div id="motors-panel-inputs" style="display:none;">
+      <div class="section-title">3 — Motors Panel (MCC) Load</div>
+      <div class="card">
+        <div class="field-grid">
+          <div class="field">
+            <label>Total Motors Load</label>
+            <div class="input-with-unit">
+              <input type="number" id="motors-panel-load" min="0" step="0.1" value="75" placeholder="e.g. 75">
+              <select id="motors-panel-unit" class="unit-select">
+                <option value="kva" selected>kVA</option>
+                <option value="kw">kW</option>
+                <option value="hp">HP</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Voltage <span class="unit">(V)</span></label>
+            <input type="number" id="motors-panel-voltage" min="0" step="1" value="380" placeholder="e.g. 380">
+          </div>
+          <div class="field">
+            <label>Phase</label>
+            <select id="motors-panel-phase">
+              <option value="3p">3 Phase (3P)</option>
+              <option value="3pn" selected>3 Phase + Neutral (3P+N)</option>
+              <option value="1p">Single Phase (1P+N)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Motor Power Factor (PF) <span class="unit">(0–1)</span></label>
+            <input type="number" id="motors-panel-pf" min="0.5" max="1" step="0.01" value="0.85">
+          </div>
+        </div>
+        <div class="notes">Motors Panel (MCC) Main Breaker Calculation: Enter total panel load in kVA, kW, or HP. Current is calculated as <code>I = S × 1000 / (√3 × V)</code> for 3-phase. Sized with 125% safety factor for continuous motor load feeder (<code>I_125 = I × 1.25</code>), and feeder cable ampacity is sized at <code>Breaker / 0.80</code> from Elsewedy Cables LV catalogue with AutoCAD drawing tag.</div>
+      </div>
+    </div>
+
+    <div class="section-title">4 — Cable selection &amp; Engineering verification (Elsewedy Cables, 0.6/1kV LV)</div>
+    <div class="card">
+      <div class="field-grid">
+        <div class="field"><label>Conductor</label>
+          <div class="toggle-row">
+            <button class="toggle-btn active" data-cond="cu" type="button">Copper</button>
+            <button class="toggle-btn" data-cond="al" type="button">Aluminium</button>
+          </div>
+        </div>
+        <div class="field"><label>Insulation</label>
+          <div class="toggle-row">
+            <button class="toggle-btn active" data-insul="xlpe" type="button">XLPE (90°C)</button>
+            <button class="toggle-btn" data-insul="pvc" type="button">PVC (70°C)</button>
+          </div>
+        </div>
+        <div class="field"><label>Cable construction</label>
+          <div class="toggle-row">
+            <button class="toggle-btn active" data-form="single" type="button">Single-core (1C)</button>
+            <button class="toggle-btn" data-form="multi" type="button">Multicore, unarmoured</button>
+            <button class="toggle-btn" data-form="armoured" type="button">Multicore, armoured (SWA/STA)</button>
+          </div>
+        </div>
+        <div class="field"><label>Installation method</label>
+          <div class="toggle-row">
+            <button class="toggle-btn active" data-install="ground" type="button">Direct buried / ground</button>
+            <button class="toggle-btn" data-install="duct" type="button">In duct</button>
+            <button class="toggle-btn" data-install="air" type="button">Free air (tray/ladder)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-grid" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--grid);">
+        <div class="field">
+          <label>Feeder cable length <span class="unit">(m)</span></label>
+          <input type="number" id="b-cable-length" min="1" step="1" value="30" placeholder="e.g. 30">
+        </div>
+        <div class="field">
+          <label>Max allowed voltage drop <span class="unit">(%)</span></label>
+          <input type="number" id="b-vdrop-max" min="0.5" max="10" step="0.5" value="3.0" placeholder="e.g. 3.0">
+        </div>
+        <div class="field">
+          <label>Cable correction factor (K_total)</label>
+          <input type="number" id="b-derate" min="0.2" max="1" step="0.05" value="0.80">
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Default 0.80 (IEC 60364-4-43 / ambient &amp; grouping factor)</div>
+        </div>
+        <div class="field">
+          <label>Configurable standard breakers <span class="unit">(A)</span></label>
+          <input type="text" id="b-breakers-config" value="6, 10, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 225, 250, 320, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3200, 4000">
+        </div>
+      </div>
+
+      <!-- Optional Short-Circuit Verification -->
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--grid);">
+        <label style="display:block;font-size:12px;color:var(--text-dim);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Short-Circuit Verification (Optional Data)</label>
+        <div class="field-grid">
+          <div class="field">
+            <label>Prospective fault current <span class="unit">(kA)</span></label>
+            <input type="number" id="b-isc" min="0" step="0.1" placeholder="Optional (e.g. 10)">
+          </div>
+          <div class="field">
+            <label>Fault clearing time <span class="unit">(s)</span></label>
+            <input type="number" id="b-fclear" min="0" step="0.01" value="0.1" placeholder="e.g. 0.1">
+          </div>
+        </div>
+        <div class="notes" style="margin-top:6px;">If prospective fault current is omitted, the application clearly indicates that short-circuit verification requires additional input data.</div>
+      </div>
+    </div>
+
+    <div class="section-title">Results</div>
+    <div class="card" id="b-out"></div>
+
+  </div>
+
+</div>
+
+<footer>Reference: NEC Article 440 for HVAC/refrigeration sizing ratios; Elsewedy Cables 0.6/1(1.2)kV LV catalogue for conductor ampacities. Values shown are worksheet estimates — always confirm equivalent horsepower against NEC Tables 430.248–430.251, verify trip-curve coordination, and apply any derating for grouping, depth or ambient temperature that your installation requires before finalising a design.</footer>
+
+<script>
+// ===================================================================
+// Helpers
+// ===================================================================
+function num(id){ const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 0 : v; }
+function fmt(v){ if(!isFinite(v)) return '—'; return (Math.round(v*100)/100).toString(); }
+function meter(label, value, note, unit){
+  const isText = typeof value === 'string';
+  unit = unit===undefined ? 'A' : unit;
+  const shown = isText ? value : fmt(value);
+  return `<div class="meter"><div><div class="meter-label">${label}</div>${note?`<div class="meter-note">${note}</div>`:''}</div>
+  <div class="meter-value">${shown}${unit?`<span class="u"> ${unit}</span>`:''}</div></div>`;
+}
+function notesBlock(items){ return `<div class="notes"><ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul></div>`; }
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ===================================================================
+// SINGLE MOTOR-COMPRESSOR
+// ===================================================================
+function computeSingle(){
+  const rlc = num('s-rlc'), bsc = num('s-bsc'), lrc = num('s-lrc'), mca = num('s-mca');
+  const I = Math.max(rlc, bsc);
+
+  document.getElementById('s-out-disc').innerHTML =
+    meter('Minimum ampere rating of disconnecting means', 1.15*I, '≥ 115% of the greater of RLC or BSC.') +
+    notesBlock([
+      'Also verify the disconnect\'s horsepower rating ≥ the equivalent HP from NEC Tables 430.248–250 (using this current) and 430.251 (using locked-rotor current) — use whichever HP is greater.',
+      'For a non-fused disconnect, its ampere rating must be less than 115% of the calculated current.'
+    ]);
+
+  document.getElementById('s-out-ocpd').innerHTML =
+    meter('Step 1 — starting OCPD rating', 1.75*I, '≤ 175% of the greater of RLC or BSC.') +
+    meter('Step 3 — if time-current curves intersect', 2.25*I, 'Use only if the breaker\'s trip curve intersects the motor\'s starting curve (≤ 225%).') +
+    notesBlock([
+      'The OCPD rating is never required to be less than 15A [440.22(A) exception].',
+      'Equipment on a 15/20A, 120V circuit, or 15A, 208/240V single-phase circuit, may be protected by that branch-circuit device [440.22(B) exception 1].'
+    ]);
+
+  const condAmp = Math.max(mca, 1.25*I);
+  document.getElementById('s-out-cond').innerHTML =
+    meter('Minimum conductor ampacity', condAmp, mca>0 ? 'MCA entered above was used as the basis, compared against 125% of the current.' : '≥ 125% of the greater of RLC or BSC (enter MCA above if the nameplate shows one, to use it directly).') +
+    notesBlock([
+      'For a Wye-start / Delta-run motor-compressor: conductors between controller and motor = 72% of the greater of RLC or BSC = ' + fmt(0.72*I) + ' A.',
+      'Never select conductors smaller than the nameplate MCA, where marked.'
+    ]);
+
+  document.getElementById('s-out-ctrl').innerHTML =
+    meter('Minimum continuous-duty FLC rating of controller', I, '≥ the greater of RLC or BSC.') +
+    meter('Minimum LRC rating of controller', lrc, '≥ the entered locked-rotor current.') +
+    notesBlock(['If the controller is marked only in horsepower, use RLC and LRC with NEC Tables 430.248–251 to find the equivalent HP and use the larger of the two.']);
+
+  const relay=1.40*rlc, thermal=1.56*I, fuseCB=1.25*rlc, special=1.56*I;
+  document.getElementById('s-out-ovl').innerHTML =
+    meter('Option 1 — separate overload relay', relay, '≤ 140% of RLC.') +
+    meter('Option 2 — thermal protector', thermal, '≤ 156% of the greater of RLC or BSC.') +
+    meter('Option 3 — fuse or inverse-time breaker', fuseCB, '≤ 125% of RLC.') +
+    meter('Option 4 — manufacturer\'s special protective system', special, '≤ 156% of the greater of RLC or BSC.') +
+    notesBlock([
+      'A nameplate marked "Thermally Protected" needs no further overload protection.',
+      'Always follow the manufacturer\'s marked maximum device (e.g. "Maximum Fuse Size", "HACR only") literally.'
+    ]);
+}
+['s-rlc','s-bsc','s-lrc','s-mca'].forEach(id=>document.getElementById(id).addEventListener('input', computeSingle));
+computeSingle();
+
+// ===================================================================
+// COMBINATION AC LOADS
+// ===================================================================
+let loadRows = [];
+let rowCounter = 0;
+function addLoadRow(type){
+  rowCounter++;
+  loadRows.push({id:rowCounter, type: type||'mc', rlc:0, bsc:0, lrc:0});
+  renderLoadRows();
+}
+function removeLoadRow(id){ loadRows = loadRows.filter(r=>r.id!==id); renderLoadRows(); }
+function updateLoadRow(id, field, value){ const r=loadRows.find(r=>r.id===id); if(r) r[field]=value; computeCombo(); }
+function changeRowType(id, type){ const r=loadRows.find(r=>r.id===id); if(r) r.type=type; renderLoadRows(); }
+
+function renderLoadRows(){
+  const container = document.getElementById('load-rows');
+  container.innerHTML = loadRows.map(row=>{
+    let fields='';
+    if(row.type==='mc'){
+      fields = `<div class="field-grid">
+        <div class="field"><label>RLC <span class="unit">(A)</span></label><input type="number" min="0" step="0.1" value="${row.rlc||''}" onchange="updateLoadRow(${row.id},'rlc',parseFloat(this.value)||0)"></div>
+        <div class="field"><label>BSC <span class="unit">(A)</span> — optional</label><input type="number" min="0" step="0.1" value="${row.bsc||''}" onchange="updateLoadRow(${row.id},'bsc',parseFloat(this.value)||0)"></div>
+        <div class="field"><label>LRC <span class="unit">(A)</span></label><input type="number" min="0" step="0.1" value="${row.lrc||''}" onchange="updateLoadRow(${row.id},'lrc',parseFloat(this.value)||0)"></div>
+      </div>`;
+    } else if(row.type==='fan' || row.type==='motor'){
+      fields = `<div class="field-grid">
+        <div class="field"><label>FLC <span class="unit">(A)</span></label><input type="number" min="0" step="0.1" value="${row.rlc||''}" onchange="updateLoadRow(${row.id},'rlc',parseFloat(this.value)||0)"></div>
+        <div class="field"><label>LRC <span class="unit">(A)</span> — optional</label><input type="number" min="0" step="0.1" value="${row.lrc||''}" onchange="updateLoadRow(${row.id},'lrc',parseFloat(this.value)||0)"></div>
+      </div>`;
+    } else {
+      fields = `<div class="field-grid">
+        <div class="field"><label>Rated current <span class="unit">(A)</span></label><input type="number" min="0" step="0.1" value="${row.rlc||''}" onchange="updateLoadRow(${row.id},'rlc',parseFloat(this.value)||0)"></div>
+      </div>`;
+    }
+    return `<div class="load-row">
+      <div class="load-row-head">
+        <select class="tag-select" onchange="changeRowType(${row.id}, this.value)">
+          <option value="mc" ${row.type==='mc'?'selected':''}>Motor-compressor</option>
+          <option value="fan" ${row.type==='fan'?'selected':''}>Fan / blower motor</option>
+          <option value="motor" ${row.type==='motor'?'selected':''}>Other motor</option>
+          <option value="other" ${row.type==='other'?'selected':''}>Other load</option>
+        </select>
+        <button class="remove-btn" onclick="removeLoadRow(${row.id})" type="button">Remove ✕</button>
+      </div>${fields}</div>`;
+  }).join('') || `<div class="notes">No loads yet. Click "Add load" to start.</div>`;
+  computeCombo();
+}
+document.getElementById('add-row-btn').addEventListener('click', ()=>addLoadRow('mc'));
+
+function rowI(row){ return row.type==='mc' ? Math.max(row.rlc||0,row.bsc||0) : (row.rlc||0); }
+function rowLRC(row){ return row.type==='other' ? (row.rlc||0) : (row.lrc||0); }
+
+function computeCombo(){
+  const outDisc=document.getElementById('c-out-disc'), outOcpd=document.getElementById('c-out-ocpd'),
+        outCond=document.getElementById('c-out-cond'), outOvl=document.getElementById('c-out-ovl');
+  const mcRows = loadRows.filter(r=>r.type==='mc');
+  if(mcRows.length===0){
+    const msg=`<div class="notes">Add at least one motor-compressor load to calculate this section.</div>`;
+    outDisc.innerHTML=msg; outOcpd.innerHTML=msg; outCond.innerHTML=msg; outOvl.innerHTML=msg;
+    return;
+  }
+  const sumI = loadRows.reduce((s,r)=>s+rowI(r),0);
+  const sumLRC = loadRows.reduce((s,r)=>s+rowLRC(r),0);
+  const largestMc = mcRows.reduce((a,b)=> rowI(b)>rowI(a)?b:a);
+  const largestMcI = rowI(largestMc);
+  const largestOverall = loadRows.reduce((a,b)=> rowI(b)>rowI(a)?b:a);
+  const isMcLargest = largestOverall.id===largestMc.id;
+
+  outDisc.innerHTML = meter('Minimum ampere rating (disconnect / controller)', 1.15*sumI, '≥ 115% of the sum of every load\'s current (each motor-compressor: greater of RLC/BSC; other loads: full rating).') +
+    notesBlock(['Also compare the equivalent HP from Tables 430.248–250 (using the summed current) and 430.251 (using summed locked-rotor current = '+fmt(sumLRC)+' A), and use the larger.',
+      'If it doesn\'t fit, repeat with a higher-rated disconnect.']);
+
+  let ocpdHtml='';
+  if(isMcLargest){
+    const rest=sumI-largestMcI;
+    ocpdHtml = `<div class="notes" style="border-color:var(--teal);margin-bottom:14px;">Case A: the largest motor-compressor is the largest load on the circuit.</div>` +
+      meter('Step 1 — starting OCPD rating', 1.75*largestMcI+rest, '175% of the largest compressor (RLC/BSC) + full rating of every other load.') +
+      meter('Step 3 — if trip curves intersect (MOP)', 2.25*largestMcI+rest, '225% of the largest compressor + full rating of every other load.');
+  } else {
+    const sumMcI = mcRows.reduce((s,r)=>s+rowI(r),0);
+    const otherRows = loadRows.filter(r=>r.type!=='mc');
+    const sumOtherI = otherRows.reduce((s,r)=>s+rowI(r),0);
+    const restForMop = sumI-rowI(largestOverall);
+    ocpdHtml = `<div class="notes" style="border-color:var(--danger);margin-bottom:14px;">Case B: a non-compressor load is larger than any motor-compressor on the circuit.</div>` +
+      meter('Step 1 — starting OCPD rating', sumMcI+sumOtherI, 'Sum of compressor currents (RLC/BSC) + other motors (≤800A) + other loads, no multiplier.') +
+      meter('Step 3 — if trip curves intersect (MOP)', 2.25*rowI(largestOverall)+restForMop, '225% of the largest load on the circuit + full rating of every other load.');
+  }
+  outOcpd.innerHTML = ocpdHtml + notesBlock([
+    'Always compare the breaker\'s time-current curve with the motor\'s starting curve; if they don\'t intersect, Step 1 is adequate.',
+    'If MOP isn\'t a standard/multiple-of-5 size, round down. If MOP is below MCA, raise it to MCA then round up to the next standard fuse size. If below 15A, round up to 15A [440.22(A) exception].'
+  ]);
+
+  const condAmp = 1.25*largestMcI + (sumI-largestMcI);
+  outCond.innerHTML = meter('Minimum conductor ampacity', condAmp, '125% of the largest motor-compressor (RLC/BSC) + full rating of every other load.') +
+    notesBlock(['Use the nameplate MCA of combined equipment where marked — never smaller [440.4(B)].',
+      'For shaded-pole or PSC fan/blower motors, use the nameplate full-load current rather than an HP-based rating [440.6(B)].']);
+
+  outOvl.innerHTML = mcRows.map((row,idx)=>{
+    const relay=1.40*(row.rlc||0), thermal=1.56*rowI(row), fuseCB=1.25*(row.rlc||0), special=1.56*rowI(row);
+    return `<div class="section-title" style="margin-top:${idx===0?'0':'22px'};">Motor-compressor #${idx+1}</div>` +
+      meter('Separate overload relay', relay, '≤ 140% of RLC.') +
+      meter('Thermal protector', thermal, '≤ 156% of the greater of RLC or BSC.') +
+      meter('Fuse or inverse-time breaker', fuseCB, '≤ 125% of RLC.') +
+      meter('Manufacturer\'s special protective system', special, '≤ 156% of the greater of RLC or BSC.');
+  }).join('');
+}
+addLoadRow('mc');
+
+// ===================================================================
+// ROOM AC
+// ===================================================================
+let roomOtherLoads=false;
+document.getElementById('r-toggle-no').addEventListener('click', ()=>{
+  roomOtherLoads=false;
+  document.getElementById('r-toggle-no').classList.add('active');
+  document.getElementById('r-toggle-yes').classList.remove('active');
+  computeRoom();
+});
+document.getElementById('r-toggle-yes').addEventListener('click', ()=>{
+  roomOtherLoads=true;
+  document.getElementById('r-toggle-yes').classList.add('active');
+  document.getElementById('r-toggle-no').classList.remove('active');
+  computeRoom();
+});
+document.getElementById('r-rating').addEventListener('input', computeRoom);
+function computeRoom(){
+  const rating=num('r-rating');
+  const factor = roomOtherLoads ? 2.00 : 1.25;
+  document.getElementById('r-out').innerHTML =
+    meter('Required branch-circuit ampacity', factor*rating, roomOtherLoads ? '≥ 200% of nameplate current — shared general-use circuit.' : '≥ 125% of nameplate current — sole load on the circuit.') +
+    notesBlock([
+      'These ratios apply only to single-phase room A/C units rated under 40A at up to 250V.',
+      'Equipment on a 15/20A, 120V, or 15A 208/240V single-phase circuit may be protected by that branch-circuit device without further calculation [440.22(B) exception 1].'
+    ]);
+}
+computeRoom();
+
+// =============// ===================================================================
+// CENTRAL ELECTRICAL CALCULATION ENGINE (STANDALONE)
+// ===================================================================
+
+let STANDARD_BREAKERS = [6,10,16,20,25,32,40,50,63,80,100,125,160,200,225,250,320,400,500,630,800,1000,1250,1600,2000,2500,3200,4000];
+
+// Conductor AC resistance at max operating temperature (Ω/km) and reactance (Ω/km)
+// Based on IEC 60228 / Elsewedy Cables 0.6/1kV LV catalogue
+const CABLE_IMPEDANCE = {
+  cu: {
+    1.5: { r_pvc: 14.8, r_xlpe: 15.1, x: 0.115 },
+    2.5: { r_pvc: 8.91, r_xlpe: 9.08, x: 0.107 },
+    4:   { r_pvc: 5.57, r_xlpe: 5.68, x: 0.100 },
+    6:   { r_pvc: 3.71, r_xlpe: 3.78, x: 0.095 },
+    10:  { r_pvc: 2.24, r_xlpe: 2.28, x: 0.086 },
+    16:  { r_pvc: 1.41, r_xlpe: 1.44, x: 0.083 },
+    25:  { r_pvc: 0.870, r_xlpe: 0.887, x: 0.081 },
+    35:  { r_pvc: 0.627, r_xlpe: 0.639, x: 0.079 },
+    50:  { r_pvc: 0.493, r_xlpe: 0.503, x: 0.078 },
+    70:  { r_pvc: 0.342, r_xlpe: 0.349, x: 0.076 },
+    95:  { r_pvc: 0.247, r_xlpe: 0.252, x: 0.075 },
+    120: { r_pvc: 0.196, r_xlpe: 0.200, x: 0.074 },
+    150: { r_pvc: 0.159, r_xlpe: 0.162, x: 0.073 },
+    185: { r_pvc: 0.128, r_xlpe: 0.131, x: 0.073 },
+    240: { r_pvc: 0.098, r_xlpe: 0.100, x: 0.072 },
+    300: { r_pvc: 0.080, r_xlpe: 0.082, x: 0.072 },
+    400: { r_pvc: 0.064, r_xlpe: 0.065, x: 0.071 },
+    500: { r_pvc: 0.055, r_xlpe: 0.056, x: 0.070 },
+    630: { r_pvc: 0.046, r_xlpe: 0.047, x: 0.069 },
+    800: { r_pvc: 0.038, r_xlpe: 0.039, x: 0.068 },
+    1000:{ r_pvc: 0.032, r_xlpe: 0.033, x: 0.068 }
+  },
+  al: {
+    16:  { r_pvc: 2.45,  r_xlpe: 2.50,  x: 0.083 },
+    25:  { r_pvc: 1.54,  r_xlpe: 1.57,  x: 0.081 },
+    35:  { r_pvc: 1.11,  r_xlpe: 1.13,  x: 0.079 },
+    50:  { r_pvc: 0.868, r_xlpe: 0.885, x: 0.078 },
+    70:  { r_pvc: 0.586, r_xlpe: 0.598, x: 0.076 },
+    95:  { r_pvc: 0.421, r_xlpe: 0.430, x: 0.075 },
+    120: { r_pvc: 0.335, r_xlpe: 0.342, x: 0.074 },
+    150: { r_pvc: 0.272, r_xlpe: 0.277, x: 0.073 },
+    185: { r_pvc: 0.219, r_xlpe: 0.223, x: 0.073 },
+    240: { r_pvc: 0.164, r_xlpe: 0.167, x: 0.072 },
+    300: { r_pvc: 0.132, r_xlpe: 0.135, x: 0.072 },
+    400: { r_pvc: 0.107, r_xlpe: 0.109, x: 0.071 },
+    500: { r_pvc: 0.086, r_xlpe: 0.088, x: 0.070 },
+    630: { r_pvc: 0.071, r_xlpe: 0.072, x: 0.069 },
+    800: { r_pvc: 0.059, r_xlpe: 0.060, x: 0.068 },
+    1000:{ r_pvc: 0.048, r_xlpe: 0.049, x: 0.068 }
+  }
+};
+
+// ===================================================================
+// CABLE REFERENCE DATA (Elsewedy Cables 0.6/1kV LV catalogue, pages 59-99)
+// ===================================================================
+const T = {
+  cu_pvc_1core: {4:{ground:53,duct:38,air:50,dia:7.1},6:{ground:65,duct:47,air:65,dia:7.6},10:{ground:88,duct:62,air:89,dia:8.3},16:{ground:113,duct:77,air:108,dia:9.3},25:{ground:143,duct:101,air:143,dia:10.6},35:{ground:171,duct:123,air:176,dia:11.7},50:{ground:203,duct:148,air:214,dia:13.4},70:{ground:248,duct:183,air:271,dia:15},95:{ground:296,duct:224,air:332,dia:17.1},120:{ground:337,duct:255,air:386,dia:18.5},150:{ground:378,duct:292,air:442,dia:20.5},185:{ground:426,duct:333,air:510,dia:22.8},240:{ground:494,duct:393,air:608,dia:25.8},300:{ground:556,duct:450,air:704,dia:28.8},400:{ground:629,duct:516,air:819,dia:32},500:{ground:709,duct:594,air:957,dia:36},630:{ground:792,duct:672,air:1113,dia:39.7},800:{ground:874,duct:753,air:1284,dia:44.2},1000:{ground:956,duct:845,air:1478,dia:51.7}},
+  al_pvc_1core: {16:{ground:86,duct:60,air:83,dia:9.1},25:{ground:111,duct:79,air:111,dia:10.6},35:{ground:133,duct:95,air:136,dia:11.7},50:{ground:157,duct:115,air:166,dia:13.4},70:{ground:193,duct:142,air:210,dia:15},95:{ground:230,duct:174,air:258,dia:17.1},120:{ground:262,duct:198,air:300,dia:18.5},150:{ground:294,duct:227,air:343,dia:20.5},185:{ground:333,duct:260,air:397,dia:22.8},240:{ground:386,duct:307,air:473,dia:25.7},300:{ground:437,duct:353,air:548,dia:28.7},400:{ground:499,duct:410,air:644,dia:32},500:{ground:570,duct:478,air:757,dia:35.9},630:{ground:648,duct:550,air:889,dia:39.6},800:{ground:730,duct:630,air:1045,dia:44.6},1000:{ground:814,duct:719,air:1219,dia:51.7}},
+  cu_xlpe_1core: {4:{ground:60,duct:42,air:65,dia:6.5},6:{ground:76,duct:56,air:80,dia:7},10:{ground:103,duct:72,air:103,dia:7.7},16:{ground:129,duct:92,air:142,dia:8.7},25:{ground:166,duct:118,air:179,dia:10},35:{ground:199,duct:143,air:220,dia:11.1},50:{ground:236,duct:172,air:269,dia:12.6},70:{ground:288,duct:214,air:340,dia:14.4},95:{ground:344,duct:259,air:418,dia:16.1},120:{ground:391,duct:298,air:486,dia:17.7},150:{ground:439,duct:339,air:557,dia:19.7},185:{ground:496,duct:390,air:646,dia:21.8},240:{ground:574,duct:457,air:771,dia:24.6},300:{ground:647,duct:524,air:895,dia:27.4},400:{ground:732,duct:603,air:1044,dia:30.6},500:{ground:826,duct:695,air:1222,dia:34.6},630:{ground:925,duct:794,air:1420,dia:38.9},800:{ground:1022,duct:894,air:1639,dia:43.8},1000:{ground:1119,duct:999,air:1894,dia:51.1}},
+  al_xlpe_1core: {16:{ground:100,duct:70,air:104,dia:8.5},25:{ground:129,duct:92,air:139,dia:10},35:{ground:154,duct:111,air:171,dia:11.1},50:{ground:183,duct:134,air:208,dia:12.6},70:{ground:224,duct:166,air:264,dia:14.4},95:{ground:267,duct:201,air:324,dia:16.1},120:{ground:304,duct:232,air:377,dia:17.7},150:{ground:341,duct:263,air:432,dia:19.7},185:{ground:386,duct:304,air:502,dia:21.8},240:{ground:448,duct:357,air:599,dia:24.5},300:{ground:507,duct:411,air:696,dia:27.3},400:{ground:580,duct:478,air:819,dia:30.6},500:{ground:663,duct:558,air:965,dia:34.5},630:{ground:754,duct:647,air:1131,dia:38.8},800:{ground:850,duct:744,air:1329,dia:44.2},1000:{ground:949,duct:847,air:1556,dia:51.1}},
+
+  cu_xlpe_2core_unarmoured: {1.5:{ground:41,duct:31,air:28,dia:9.1},2.5:{ground:50,duct:39,air:38,dia:10},4:{ground:68,duct:49,air:52,dia:11},6:{ground:86,duct:64,air:67,dia:12.2},10:{ground:112,duct:85,air:89,dia:13.4},16:{ground:144,duct:102,air:118,dia:15.4},25:{ground:188,duct:133,air:154,dia:18.9},35:{ground:227,duct:162,air:189,dia:21.1},50:{ground:276,duct:193,air:230,dia:20.9},70:{ground:337,duct:236,air:286,dia:22.9},95:{ground:405,duct:288,air:357,dia:26.6},120:{ground:463,duct:336,air:419,dia:30.1},150:{ground:519,duct:378,air:478,dia:32.9},185:{ground:590,duct:438,air:560,dia:37.5},240:{ground:682,duct:513,air:663,dia:41.6},300:{ground:767,duct:582,air:757,dia:45},400:{ground:872,duct:673,air:884,dia:50.7}},
+  cu_xlpe_3core_unarmoured: {1.5:{ground:31,duct:25,air:23,dia:9.5},2.5:{ground:42,duct:33,air:34,dia:10.6},4:{ground:54,duct:39,air:44,dia:11.6},6:{ground:68,duct:49,air:53,dia:12.9},10:{ground:89,duct:65,air:72,dia:14.2},16:{ground:116,duct:82,air:95,dia:16.4},25:{ground:153,duct:110,air:126,dia:20.1},35:{ground:184,duct:132,air:156,dia:22.5},50:{ground:220,duct:157,air:186,dia:22.6},70:{ground:270,duct:195,air:236,dia:26.1},95:{ground:324,duct:236,air:290,dia:29.4},120:{ground:368,duct:272,air:337,dia:32.8},150:{ground:410,duct:307,air:383,dia:35.9},185:{ground:464,duct:351,air:441,dia:39.9},240:{ground:537,duct:414,air:524,dia:45},300:{ground:605,duct:471,air:602,dia:49.9},400:{ground:688,duct:547,air:701,dia:57.3},500:{ground:776,duct:625,air:806,dia:63.8}},
+  cu_xlpe_4core_unarmoured: {1.5:{ground:32,duct:26,air:24,dia:10.3},2.5:{ground:43,duct:33,air:35,dia:11.4},4:{ground:55,duct:40,air:45,dia:12.6},6:{ground:70,duct:50,air:55,dia:14},10:{ground:92,duct:67,air:75,dia:15.5},16:{ground:118,duct:84,air:98,dia:17.9},25:{ground:155,duct:112,air:131,dia:22.1},35:{ground:186,duct:136,air:161,dia:24.8},50:{ground:225,duct:162,air:197,dia:26.3},70:{ground:276,duct:204,air:249,dia:30.4},95:{ground:330,duct:243,air:303,dia:33.1},120:{ground:374,duct:282,air:352,dia:37.2},150:{ground:421,duct:321,air:405,dia:41.7},185:{ground:475,duct:369,air:467,dia:46.7},240:{ground:551,duct:431,air:554,dia:52.5},300:{ground:621,duct:493,air:636,dia:58.1},400:{ground:706,duct:571,air:741,dia:66.7},500:{ground:797,duct:653,air:851,dia:74.2}},
+
+  al_xlpe_2core_unarmoured: {16:{ground:113,duct:79,air:89,dia:15.9},25:{ground:146,duct:103,air:119,dia:18.9},35:{ground:176,duct:126,air:147,dia:21.1},50:{ground:209,duct:151,air:179,dia:24.1},70:{ground:257,duct:188,air:227,dia:27.7},95:{ground:307,duct:227,air:278,dia:31.1},120:{ground:350,duct:262,air:324,dia:34.5},150:{ground:392,duct:297,air:370,dia:38.3},185:{ground:444,duct:340,air:428,dia:42.7},240:{ground:516,duct:402,air:509,dia:48.1},300:{ground:585,duct:462,air:589,dia:53.7},400:{ground:670,duct:536,air:688,dia:60.3}},
+  al_xlpe_3core_unarmoured: {16:{ground:92,duct:65,air:73,dia:16.9},25:{ground:118,duct:86,air:98,dia:20.1},35:{ground:142,duct:103,air:121,dia:22.5},50:{ground:171,duct:121,air:145,dia:22.6},70:{ground:209,duct:151,air:183,dia:26.1},95:{ground:251,duct:183,air:225,dia:29.4},120:{ground:286,duct:211,air:262,dia:32.8},150:{ground:319,duct:239,air:297,dia:35.9},185:{ground:361,duct:274,air:344,dia:39.9},240:{ground:420,duct:323,air:409,dia:45},300:{ground:474,duct:369,air:471,dia:49.9},400:{ground:544,duct:433,air:555,dia:57.3},500:{ground:621,duct:501,air:645,dia:63.8}},
+  al_xlpe_4core_unarmoured: {16:{ground:93,duct:66,air:76,dia:18.5},25:{ground:120,duct:87,air:101,dia:22.1},35:{ground:144,duct:105,air:125,dia:24.8},50:{ground:175,duct:126,air:153,dia:26.3},70:{ground:215,duct:158,air:194,dia:30.4},95:{ground:256,duct:189,air:235,dia:33.1},120:{ground:291,duct:219,air:274,dia:37.2},150:{ground:327,duct:249,air:314,dia:41.7},185:{ground:370,duct:287,air:364,dia:46.7},240:{ground:430,duct:337,air:432,dia:52.5},300:{ground:486,duct:386,air:498,dia:58.1},400:{ground:558,duct:452,air:586,dia:66.7},500:{ground:638,duct:522,air:681,dia:74.2}},
+
+  cu_xlpe_2core_armoured: {4:{ground:68,duct:52,air:55,dia:14.6},6:{ground:86,duct:67,air:71,dia:15.8},10:{ground:111,duct:88,air:93,dia:17.7},16:{ground:143,duct:106,air:123,dia:19.8},25:{ground:187,duct:139,air:161,dia:24.4},35:{ground:226,duct:166,air:198,dia:26.6},50:{ground:274,duct:198,air:240,dia:26.2},70:{ground:332,duct:243,air:296,dia:28.6},95:{ground:402,duct:297,air:369,dia:32.9},120:{ground:458,duct:341,air:430,dia:36.4},150:{ground:512,duct:385,air:488,dia:39},185:{ground:580,duct:444,air:569,dia:45.2},240:{ground:667,duct:515,air:666,dia:49.3},300:{ground:746,duct:580,air:756,dia:52.5},400:{ground:839,duct:662,air:868,dia:58.4}},
+  cu_xlpe_3core_armoured: {4:{ground:54,duct:41,air:46,dia:15.3},6:{ground:58,duct:43,air:44,dia:17},10:{ground:88,duct:68,air:76,dia:18.5},16:{ground:114,duct:84,air:99,dia:20.7},25:{ground:152,duct:113,air:132,dia:25.6},35:{ground:183,duct:137,air:162,dia:28},50:{ground:232,duct:168,air:206,dia:28.1},70:{ground:286,duct:209,air:262,dia:32.4},95:{ground:342,duct:253,air:322,dia:35.9},120:{ground:390,duct:290,air:375,dia:39.1},150:{ground:434,duct:330,air:426,dia:43.6},185:{ground:490,duct:375,air:490,dia:47.6},240:{ground:565,duct:436,air:579,dia:52.7},300:{ground:634,duct:496,air:663,dia:57.6},400:{ground:715,duct:567,air:769,dia:64.8},500:{ground:791,duct:635,air:872,dia:73}},
+  cu_xlpe_4core_armoured: {4:{ground:54,duct:42,air:47,dia:16.3},6:{ground:68,duct:52,air:57,dia:18.4},10:{ground:90,duct:69,air:77,dia:19.8},16:{ground:115,duct:86,air:101,dia:23},25:{ground:154,duct:116,air:136,dia:27.6},35:{ground:185,duct:140,air:166,dia:30.5},50:{ground:238,duct:174,air:218,dia:31.8},70:{ground:293,duct:218,air:277,dia:36.9},95:{ground:350,duct:260,air:337,dia:39.4},120:{ground:397,duct:301,air:393,dia:44.9},150:{ground:446,duct:341,air:451,dia:49.4},185:{ground:503,duct:390,air:521,dia:54.2},240:{ground:579,duct:456,air:614,dia:60.2},300:{ground:649,duct:513,air:702,dia:65.8},400:{ground:725,duct:584,air:810,dia:75.9},500:{ground:806,duct:659,air:920,dia:83.4}},
+
+  al_xlpe_2core_armoured: {16:{ground:113,duct:82,air:94,dia:20.3},25:{ground:146,duct:108,air:125,dia:24.4},35:{ground:175,duct:129,air:153,dia:26.6},50:{ground:208,duct:155,air:186,dia:29.6},70:{ground:255,duct:193,air:233,dia:33.6},95:{ground:306,duct:233,air:286,dia:37.6},120:{ground:348,duct:268,air:331,dia:41},150:{ground:389,duct:302,air:376,dia:44.6},185:{ground:439,duct:347,air:434,dia:50.6},240:{ground:509,duct:405,air:512,dia:56},300:{ground:574,duct:462,air:588,dia:61.4},400:{ground:652,duct:531,air:680,dia:68.2}},
+  al_xlpe_3core_armoured: {16:{ground:92,duct:67,air:77,dia:21.3},25:{ground:118,duct:88,air:103,dia:25.6},35:{ground:142,duct:106,air:125,dia:28},50:{ground:180,duct:130,air:160,dia:28.1},70:{ground:222,duct:162,air:204,dia:32.4},95:{ground:266,duct:196,air:250,dia:35.9},120:{ground:304,duct:226,air:292,dia:39.1},150:{ground:338,duct:257,air:332,dia:43.6},185:{ground:383,duct:294,air:383,dia:47.6},240:{ground:445,duct:343,air:455,dia:52.7},300:{ground:501,duct:392,air:524,dia:57.6},400:{ground:573,duct:454,air:616,dia:64.8},500:{ground:646,duct:519,air:711,dia:73}},
+  al_xlpe_4core_armoured: {16:{ground:93,duct:69,air:80,dia:24},25:{ground:120,duct:90,air:105,dia:27.6},35:{ground:144,duct:109,air:129,dia:30.5},50:{ground:185,duct:135,air:169,dia:31.8},70:{ground:228,duct:169,air:215,dia:36.9},95:{ground:272,duct:202,air:262,dia:39.4},120:{ground:309,duct:235,air:306,dia:44.9},150:{ground:348,duct:266,air:352,dia:49.4},185:{ground:394,duct:306,air:408,dia:54.2},240:{ground:456,duct:359,air:483,dia:60.2},300:{ground:514,duct:407,air:556,dia:65.8},400:{ground:585,duct:471,air:653,dia:75.9},500:{ground:661,duct:541,air:754,dia:83.4}},
+
+  cu_pvc_2core_unarmoured: {1.5:{ground:34,duct:25,air:21,dia:9.5},2.5:{ground:43,duct:33,air:29,dia:10.4},4:{ground:57,duct:42,air:41,dia:12.2},6:{ground:72,duct:53,air:52,dia:13.4},10:{ground:93,duct:73,air:69,dia:14.6},16:{ground:122,duct:86,air:92,dia:16.6},25:{ground:156,duct:114,air:121,dia:20.1},35:{ground:189,duct:137,air:149,dia:22.3},50:{ground:236,duct:165,air:186,dia:22.5},70:{ground:287,duct:204,air:230,dia:24.3},95:{ground:346,duct:249,air:287,dia:28.6},120:{ground:396,duct:287,air:336,dia:31.7},150:{ground:443,duct:325,air:383,dia:34.5},185:{ground:503,duct:373,air:446,dia:39.2},240:{ground:582,duct:439,air:528,dia:43.8},300:{ground:653,duct:497,air:601,dia:47},400:{ground:741,duct:570,air:699,dia:52.9}},
+  cu_pvc_3core_unarmoured: {1.5:{ground:27,duct:21,air:20,dia:10},2.5:{ground:35,duct:27,air:24,dia:11},4:{ground:46,duct:36,air:34,dia:12.8},6:{ground:59,duct:43,air:43,dia:14.2},10:{ground:78,duct:57,air:59,dia:15.5},16:{ground:98,duct:71,air:80,dia:17.6},25:{ground:130,duct:94,air:102,dia:21.4},35:{ground:156,duct:114,air:125,dia:23.8},50:{ground:189,duct:136,air:151,dia:24.2},70:{ground:232,duct:169,air:191,dia:27.5},95:{ground:278,duct:205,air:235,dia:31.6},120:{ground:315,duct:234,air:270,dia:33.6},150:{ground:354,duct:266,air:310,dia:37.5},185:{ground:399,duct:303,air:357,dia:41.7},240:{ground:462,duct:357,air:423,dia:47.2},300:{ground:521,duct:406,air:486,dia:52.5},400:{ground:593,duct:468,air:567,dia:59.7},500:{ground:668,duct:534,air:650,dia:66.4}},
+  cu_pvc_4core_unarmoured: {1.5:{ground:28,duct:22,air:21,dia:10.8},2.5:{ground:36,duct:28,air:25,dia:11.9},4:{ground:46,duct:36,air:36,dia:14},6:{ground:60,duct:44,air:45,dia:15.6},10:{ground:79,duct:58,air:61,dia:17},16:{ground:99,duct:73,air:83,dia:19.6},25:{ground:131,duct:96,air:105,dia:23.5},35:{ground:158,duct:116,air:129,dia:26.2},50:{ground:195,duct:141,air:161,dia:28.3},70:{ground:239,duct:175,air:203,dia:32.1},95:{ground:285,duct:211,air:247,dia:35.8},120:{ground:324,duct:243,air:287,dia:39.4},150:{ground:364,duct:277,air:329,dia:43.9},185:{ground:411,duct:316,air:379,dia:48.9},240:{ground:476,duct:372,air:450,dia:55.2},300:{ground:537,duct:425,air:516,dia:61.3},400:{ground:610,duct:490,air:601,dia:69.9},500:{ground:689,duct:561,air:690,dia:77.4}},
+
+  al_pvc_2core_unarmoured: {16:{ground:94,duct:68,air:71,dia:17.1},25:{ground:121,duct:88,air:94,dia:20.1},35:{ground:147,duct:106,air:116,dia:22.3},50:{ground:174,duct:128,air:141,dia:25.7},70:{ground:214,duct:158,air:178,dia:29.1},95:{ground:256,duct:191,air:218,dia:33.1},120:{ground:292,duct:221,air:253,dia:36.1},150:{ground:327,duct:249,air:288,dia:39.9},185:{ground:370,duct:287,air:333,dia:44.5},240:{ground:429,duct:338,air:394,dia:50.3},300:{ground:486,duct:386,air:455,dia:56.1},400:{ground:556,duct:447,air:529,dia:62.9}},
+  al_pvc_3core_unarmoured: {16:{ground:78,duct:56,air:59,dia:18.2},25:{ground:101,duct:73,air:79,dia:21.4},35:{ground:121,duct:89,air:97,dia:23.8},50:{ground:147,duct:106,air:117,dia:24.2},70:{ground:180,duct:131,air:148,dia:27.5},95:{ground:216,duct:159,air:182,dia:31.6},120:{ground:245,duct:182,air:210,dia:33.6},150:{ground:275,duct:206,air:241,dia:37.5},185:{ground:311,duct:236,air:278,dia:41.7},240:{ground:362,duct:279,air:331,dia:47.2},300:{ground:409,duct:318,air:381,dia:52.5},400:{ground:470,duct:371,air:449,dia:59.7},500:{ground:536,duct:428,air:521,dia:66.4}},
+  al_pvc_4core_unarmoured: {16:{ground:79,duct:57,air:61,dia:19.9},25:{ground:102,duct:75,air:81,dia:23.5},35:{ground:123,duct:90,air:100,dia:26.2},50:{ground:151,duct:110,air:125,dia:28.3},70:{ground:185,duct:136,air:157,dia:32.1},95:{ground:221,duct:164,air:192,dia:35.8},120:{ground:252,duct:189,air:223,dia:39.4},150:{ground:283,duct:216,air:256,dia:43.9},185:{ground:321,duct:247,air:296,dia:48.9},240:{ground:372,duct:291,air:352,dia:55.2},300:{ground:421,duct:333,air:405,dia:61.3},400:{ground:484,duct:388,air:477,dia:69.9},500:{ground:552,duct:450,air:554,dia:77.4}},
+
+  cu_pvc_2core_armoured: {6:{ground:71,duct:53,air:53,dia:16.4},10:{ground:93,duct:73,air:70,dia:17.4},16:{ground:121,duct:86,air:93,dia:19.4},25:{ground:155,duct:114,air:123,dia:22.3},35:{ground:187,duct:138,air:151,dia:24.5},50:{ground:232,duct:167,air:187,dia:24.7},70:{ground:283,duct:203,air:231,dia:26.5},95:{ground:339,duct:250,air:287,dia:31.4},120:{ground:391,duct:290,air:339,dia:35.7},150:{ground:438,duct:328,air:385,dia:38.3},185:{ground:496,duct:375,air:447,dia:43.2},240:{ground:573,duct:440,air:527,dia:47.8},300:{ground:640,duct:496,air:597,dia:51.2},400:{ground:726,duct:570,air:691,dia:57.1}},
+  cu_pvc_3core_armoured: {4:{ground:45,duct:36,air:35,dia:15.8},6:{ground:58,duct:43,air:44,dia:17},10:{ground:77,duct:57,air:59,dia:18.4},16:{ground:96,duct:72,air:81,dia:20.5},25:{ground:128,duct:95,air:103,dia:23.6},35:{ground:154,duct:114,air:126,dia:26},50:{ground:198,duct:140,air:161,dia:26.6},70:{ground:242,duct:176,air:203,dia:30.1},95:{ground:293,duct:215,air:255,dia:35.6},120:{ground:333,duct:245,air:293,dia:37.4},150:{ground:373,duct:278,air:336,dia:41.7},185:{ground:421,duct:317,air:387,dia:45.9},240:{ground:488,duct:373,air:460,dia:51.4},300:{ground:551,duct:424,air:531,dia:56.5},400:{ground:627,duct:492,air:621,dia:63.9},500:{ground:706,duct:560,air:714,dia:70.6}},
+  cu_pvc_4core_armoured: {4:{ground:47,duct:37,air:37,dia:17},6:{ground:60,duct:45,air:46,dia:18.4},10:{ground:80,duct:59,air:63,dia:19.8},16:{ground:100,duct:74,air:85,dia:22.2},25:{ground:130,duct:96,air:105,dia:25.7},35:{ground:156,duct:117,air:130,dia:28.4},50:{ground:204,duct:148,air:172,dia:31.1},70:{ground:252,duct:184,air:220,dia:35.9},95:{ground:301,duct:222,air:269,dia:39.6},120:{ground:343,duct:257,air:312,dia:43.4},150:{ground:386,duct:291,air:359,dia:48.1},185:{ground:436,duct:333,air:415,dia:53.1},240:{ground:506,duct:391,air:494,dia:59.4},300:{ground:571,duct:447,air:570,dia:65.5},400:{ground:650,duct:517,air:667,dia:74.3},500:{ground:736,duct:592,air:774,dia:83}},
+
+  al_pvc_2core_armoured: {16:{ground:93,duct:68,air:72,dia:19.3},25:{ground:120,duct:89,air:95,dia:22.3},35:{ground:145,duct:107,air:117,dia:24.5},50:{ground:172,duct:129,air:142,dia:27.9},70:{ground:212,duct:160,air:179,dia:31.3},95:{ground:252,duct:192,air:217,dia:35.9},120:{ground:289,duct:224,air:255,dia:40.1},150:{ground:324,duct:253,air:290,dia:43.7},185:{ground:366,duct:289,air:333,dia:48.5},240:{ground:425,duct:339,air:394,dia:54.3},300:{ground:481,duct:388,air:453,dia:60.3},400:{ground:549,duct:449,air:526,dia:67.1}},
+  al_pvc_3core_armoured: {16:{ground:77,duct:57,air:60,dia:20.4},25:{ground:99,duct:74,air:80,dia:23.6},35:{ground:120,duct:89,air:98,dia:26},50:{ground:153,duct:109,air:125,dia:26.6},70:{ground:188,duct:137,air:158,dia:30.1},95:{ground:227,duct:167,air:198,dia:35.6},120:{ground:259,duct:191,air:228,dia:37.4},150:{ground:290,duct:217,air:261,dia:41.7},185:{ground:329,duct:248,air:302,dia:45.9},240:{ground:383,duct:293,air:361,dia:51.4},300:{ground:434,duct:334,air:418,dia:56.5},400:{ground:499,duct:391,air:494,dia:63.9},500:{ground:569,duct:452,air:575,dia:70.6}},
+  al_pvc_4core_armoured: {16:{ground:78,duct:57,air:62,dia:22.1},25:{ground:101,duct:75,air:82,dia:25.7},35:{ground:121,duct:91,air:100,dia:28.4},50:{ground:158,duct:115,air:134,dia:31.1},70:{ground:196,duct:143,air:171,dia:35.9},95:{ground:234,duct:172,air:209,dia:39.6},120:{ground:267,duct:200,air:243,dia:43.4},150:{ground:300,duct:227,air:279,dia:48.1},185:{ground:341,duct:260,air:324,dia:53.1},240:{ground:397,duct:306,air:387,dia:59.4},300:{ground:449,duct:351,air:448,dia:65.5},400:{ground:517,duct:411,air:530,dia:74.3},500:{ground:592,duct:476,air:623,dia:83}}
+};
+
+const STANDARD_CONDUITS = [
+  {size:16, id:11.7}, {size:20, id:15.4}, {size:25, id:20.4}, {size:32, id:26.4},
+  {size:40, id:33.4}, {size:50, id:42.6}, {size:63, id:54.4}, {size:75, id:65.8},
+  {size:90, id:80.0}, {size:110, id:99.4}
+];
+const MAX_CONDUIT_FILL = 0.40;
+
+const REDUCED_NEUTRAL = {
+  16: 16, 25: 16, 35: 16, 50: 25, 70: 35, 95: 50,
+  120: 70, 150: 70, 185: 95, 240: 120, 300: 150, 400: 185, 500: 240
+};
+const STANDARD_ECC = {
+  1.5: 1.5, 2.5: 2.5, 4: 4, 6: 6, 10: 10, 16: 16,
+  25: 16, 35: 16, 50: 25, 70: 35, 95: 50, 120: 70,
+  150: 70, 185: 95, 240: 120, 300: 150, 400: 185, 500: 240
+};
+
+// ===================================================================
+// CENTRAL CALCULATION ENGINE FUNCTIONS (Section 21 Architecture)
+// ===================================================================
+
+/**
+ * calculateDemandLoad
+ * Distinguishes clearly between Connected Load and Demand Load.
+ */
+function calculateDemandLoad(connectedLoad, demandFactor, isEnabled) {
+  const df = (demandFactor > 0 && demandFactor <= 1) ? demandFactor : 1.0;
+  const applied = isEnabled !== false && df < 1.0;
+  const demandLoad = applied ? (connectedLoad * df) : connectedLoad;
+  return {
+    connectedLoad: connectedLoad,
+    demandLoad: demandLoad,
+    factor: df,
+    isApplied: applied
+  };
+}
+
+/**
+ * calculateDesignCurrent
+ * Single Phase: Ib = (S * 1000) / V
+ * Three Phase:  Ib = (S * 1000) / (√3 * VLL)
+ * When input is kVA, PF is NOT used!
+ * When input is kW/W/HP, PF IS used to find kVA.
+ */
+function calculateDesignCurrent(loadValue, unit, voltage, is3Phase, pf, demandFactor, isDemandEnabled) {
+  const V = voltage > 0 ? voltage : (is3Phase ? 380 : 230);
+  const pFactor = (pf > 0 && pf <= 1) ? pf : 0.85;
+
+  let kvaConnected = 0;
+  let isPfUsed = false;
+
+  const u = (unit || 'kva').toLowerCase();
+  if (u === 'kva') {
+    kvaConnected = loadValue;
+    isPfUsed = false;
+  } else if (u === 'va') {
+    kvaConnected = loadValue / 1000;
+    isPfUsed = false;
+  } else if (u === 'kw') {
+    kvaConnected = loadValue / pFactor;
+    isPfUsed = true;
+  } else if (u === 'w') {
+    kvaConnected = (loadValue / 1000) / pFactor;
+    isPfUsed = true;
+  } else if (u === 'hp') {
+    const kw = loadValue * 0.746;
+    kvaConnected = kw / pFactor;
+    isPfUsed = true;
+  } else {
+    kvaConnected = loadValue;
+    isPfUsed = false;
+  }
+
+  const demandResult = calculateDemandLoad(kvaConnected, demandFactor, isDemandEnabled);
+  const S_demand = demandResult.demandLoad;
+
+  let Ib = 0;
+  let formulaStr = '';
+  if (is3Phase) {
+    Ib = (S_demand * 1000) / (Math.sqrt(3) * V);
+    formulaStr = `${fmt(S_demand * 1000)} / (√3 × ${fmt(V)})`;
+  } else {
+    Ib = (S_demand * 1000) / V;
+    formulaStr = `${fmt(S_demand * 1000)} / ${fmt(V)}`;
+  }
+
+  return {
+    connectedKva: kvaConnected,
+    demandKva: S_demand,
+    demandResult: demandResult,
+    isPfUsed: isPfUsed,
+    pf: pFactor,
+    voltage: V,
+    is3Phase: is3Phase,
+    Ib: Ib,
+    formulaStr: formulaStr
+  };
+}
+
+/**
+ * calculateRequiredBreaker
+ * Sizing factor: Ib * 1.25
+ */
+function calculateRequiredBreaker(Ib, sizingFactor = 1.25) {
+  return Ib * sizingFactor;
+}
+
+/**
+ * selectStandardBreaker
+ * In >= I_required
+ */
+function selectStandardBreaker(Irequired, breakerList = STANDARD_BREAKERS) {
+  for (const b of breakerList) {
+    if (b >= Irequired) return b;
+  }
+  return Math.ceil(Irequired / 100) * 100;
+}
+function nextBreaker(I) {
+  return selectStandardBreaker(I, STANDARD_BREAKERS);
+}
+
+/**
+ * applyCorrectionFactors
+ */
+function applyCorrectionFactors(customFactor) {
+  return (customFactor > 0) ? customFactor : 0.80;
+}
+
+/**
+ * calculateCableRequirement
+ * Iz_required = In / K_total
+ */
+function calculateCableRequirement(In, Ktotal) {
+  const k = Ktotal > 0 ? Ktotal : 0.80;
+  return In / k;
+}
+
+/**
+ * selectCableFromTable
+ */
+function selectCableFromTable(tableKey, Iz_required, installKey, minSize = 0) {
+  const table = T[tableKey];
+  if (!table) return null;
+  const sizes = Object.keys(table).map(Number).sort((a, b) => a - b);
+  for (const s of sizes) {
+    if (s >= minSize && table[s][installKey] >= Iz_required) {
+      return { size: s, ampacity: table[s][installKey], dia: table[s].dia };
+    }
+  }
+  return null;
+}
+function selectCable(tableKey, requiredAmpacity, installKey) {
+  return selectCableFromTable(tableKey, requiredAmpacity, installKey);
+}
+
+/**
+ * checkProtection
+ * Fundamental Protection Check: Ib <= In <= Iz
+ */
+function checkProtection(Ib, In, Iz_corrected) {
+  const pass1 = Ib <= (In + 0.001);
+  const pass2 = In <= (Iz_corrected + 0.001);
+  return {
+    pass: pass1 && pass2,
+    passIbIn: pass1,
+    passInIz: pass2,
+    Ib: Ib,
+    In: In,
+    Iz: Iz_corrected
+  };
+}
+
+/**
+ * calculateVoltageDrop
+ */
+function calculateVoltageDrop(cableSize, lengthM, Ib, voltage, is3Phase, conductor, insulation, pf = 0.9, maxDropPct = 3.0) {
+  const condData = CABLE_IMPEDANCE[conductor] || CABLE_IMPEDANCE['cu'];
+  const imp = condData[cableSize] || { r_pvc: 0.87, r_xlpe: 0.887, x: 0.08 };
+  const r = (insulation === 'pvc') ? imp.r_pvc : imp.r_xlpe;
+  const x = imp.x || 0.08;
+
+  const cosPhi = (pf > 0 && pf <= 1) ? pf : 0.9;
+  const sinPhi = Math.sqrt(Math.max(0, 1 - cosPhi * cosPhi));
+  const z_eff = r * cosPhi + x * sinPhi;
+
+  const L = lengthM > 0 ? lengthM : 30;
+  const k = is3Phase ? Math.sqrt(3) : 2.0;
+  const dropV = (k * L * Ib * z_eff) / 1000;
+  const dropPct = (dropV / voltage) * 100;
+
+  return {
+    lengthM: L,
+    r: r,
+    x: x,
+    z_eff: z_eff,
+    dropV: dropV,
+    dropPct: dropPct,
+    maxDropPct: maxDropPct,
+    pass: dropPct <= maxDropPct
+  };
+}
+
+/**
+ * selectCableWithVdrop
+ * Iteratively increases cable size until BOTH ampacity and voltage drop requirements are satisfied!
+ */
+function selectCableWithVdrop(tableKey, Iz_required, installKey, lengthM, Ib, voltage, is3Phase, conductor, insulation, pf, maxDropPct) {
+  const table = T[tableKey];
+  if (!table) return null;
+  const sizes = Object.keys(table).map(Number).sort((a, b) => a - b);
+
+  let ampacitySelected = null;
+  for (const s of sizes) {
+    if (table[s][installKey] >= Iz_required) {
+      ampacitySelected = { size: s, ampacity: table[s][installKey], dia: table[s].dia };
+      break;
+    }
+  }
+  if (!ampacitySelected) return null;
+
+  let finalCable = ampacitySelected;
+  let vDrop = calculateVoltageDrop(finalCable.size, lengthM, Ib, voltage, is3Phase, conductor, insulation, pf, maxDropPct);
+  let steppedUp = false;
+
+  if (!vDrop.pass) {
+    for (const s of sizes) {
+      if (s > ampacitySelected.size) {
+        const candidate = { size: s, ampacity: table[s][installKey], dia: table[s].dia };
+        const candidateVdrop = calculateVoltageDrop(s, lengthM, Ib, voltage, is3Phase, conductor, insulation, pf, maxDropPct);
+        if (candidateVdrop.pass) {
+          finalCable = candidate;
+          vDrop = candidateVdrop;
+          steppedUp = true;
+          break;
+        }
+      }
+    }
+  }
+
+  return {
+    cable: finalCable,
+    ampacitySelected: ampacitySelected,
+    vDrop: vDrop,
+    steppedUp: steppedUp
+  };
+}
+
+/**
+ * checkShortCircuit
+ */
+function checkShortCircuit(cableSize, Isc_kA, timeSec, conductor, insulation) {
+  if (!Isc_kA || Isc_kA <= 0 || !timeSec || timeSec <= 0) {
+    return {
+      available: false,
+      message: 'Short-circuit verification requires additional input data.'
+    };
+  }
+  let k = 143;
+  if (conductor === 'cu') {
+    k = insulation === 'pvc' ? 115 : 143;
+  } else {
+    k = insulation === 'pvc' ? 76 : 94;
+  }
+  const S_min = (Isc_kA * 1000 * Math.sqrt(timeSec)) / k;
+  const pass = cableSize >= S_min;
+  return {
+    available: true,
+    Isc_kA: Isc_kA,
+    timeSec: timeSec,
+    k: k,
+    S_min: S_min,
+    cableSize: cableSize,
+    pass: pass
+  };
+}
+
+/**
+ * calculateNeutral
+ */
+function calculateNeutral(phaseSize, systemType) {
+  if (systemType === '1p') return phaseSize;
+  if (systemType === '3p') return null;
+  return REDUCED_NEUTRAL[phaseSize] || phaseSize;
+}
+
+/**
+ * calculateEarth
+ */
+function calculateEarth(phaseSize) {
+  return STANDARD_ECC[phaseSize] || (phaseSize > 35 ? Math.ceil(phaseSize / 2) : phaseSize);
+}
+
+/**
+ * generateCableTag
+ * Produces the exact AutoCAD / SLD tag matching the selected cable.
+ */
+function generateCableTag(cable, cores, cond, form, insul, systemType) {
+  if (!cable) return { line1: '—', line2: '—', full: '—', phaseSize: '—', neutralSize: '—', eccSize: '—' };
+  const cName = cond === 'cu' ? 'CU' : 'AL';
+  const baseIns = (insul || insulation) === 'pvc' ? 'PVC/PVC' : 'XLPE/PVC';
+  const armTag = form === 'armoured' ? ' SWA' : '';
+  const phaseSize = cable.size;
+  const neutralSize = calculateNeutral(phaseSize, systemType);
+  const eccSize = calculateEarth(phaseSize);
+
+  let line1 = '';
+  if (form === 'single') {
+    if (systemType === '3pn') {
+      line1 = `(4(1CX${phaseSize}+1CX${neutralSize})mm2  ${cName}/${baseIns}`;
+    } else if (systemType === '3p') {
+      line1 = `(3(1CX${phaseSize})mm2  ${cName}/${baseIns}`;
+    } else {
+      line1 = `(2(1CX${phaseSize})mm2  ${cName}/${baseIns}`;
+    }
+  } else {
+    if (systemType === '3pn') {
+      line1 = `(4X${phaseSize})mm2  ${cName}/${baseIns}${armTag}`;
+    } else if (systemType === '3p') {
+      line1 = `(3X${phaseSize})mm2  ${cName}/${baseIns}${armTag}`;
+    } else {
+      line1 = `(2X${phaseSize})mm2  ${cName}/${baseIns}${armTag}`;
+    }
+  }
+  const line2 = `1x${eccSize}mm2  ${cName}/PVC ECC`;
+  const full = `${line1}\n${line2}`;
+  return { line1, line2, full, phaseSize, neutralSize, eccSize };
+}
+function getCadTag(cable, cores, cond, form, insul) {
+  return generateCableTag(cable, cores, cond, form, insul, systemType);
+}
+
+function copyCadTag() {
+  const el = document.getElementById('cad-tag-display');
+  if (!el) return;
+  const text = el.innerText;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Copied AutoCAD cable tag to clipboard:\n\n' + text);
+    }).catch(() => {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+  alert('Copied AutoCAD cable tag to clipboard:\n\n' + text);
+}
+
+function getCableDescription(cable, cores, cond, form) {
+  if (!cable) return '—';
+  const cName = cond === 'cu' ? 'Cu' : 'Al';
+  const insName = (insulation || 'xlpe') === 'pvc' ? 'PVC/PVC' : 'XLPE/PVC';
+  const arm = form === 'armoured' ? 'Armoured (SWA/STA)' : 'Unarmoured';
+  if (form === 'single') {
+    return `Elsewedy ${cores} × (1 × ${cable.size} mm²) ${cName}/${insName} Single-Core (0.6/1 kV)`;
+  } else {
+    return `Elsewedy 1 × (${cores} × ${cable.size} mm²) ${cName}/${insName} ${arm} (0.6/1 kV)`;
+  }
+}
+
+function selectConduit(cableDia, numCables) {
+  const singleArea = Math.PI / 4 * cableDia * cableDia;
+  const totalArea = singleArea * numCables;
+  for (const c of STANDARD_CONDUITS) {
+    const conduitArea = Math.PI / 4 * c.id * c.id;
+    if (totalArea <= MAX_CONDUIT_FILL * conduitArea) {
+      return { size: c.size, id: c.id, totalArea, conduitArea, fillPct: (totalArea / conduitArea) * 100 };
+    }
+  }
+  return null;
+}
+
+// ===================================================================
+// UI STATE & LISTENERS
+// ===================================================================
+let panelType = 'lighting';
+let systemType = '3pn';
+let conductor = 'cu';
+let cableForm = 'single';
+let installMethod = 'ground';
+let bKwUnit = 'kva';
+let hvacCalcMode = 'panel';
+let motorsCalcMode = 'panel';
+let insulation = 'xlpe';
+const B_KW_UNIT_LABELS = { kva: 'kVA', kw: 'kW', w: 'W', hp: 'HP' };
+
+function updateBoardVisibility() {
+  const lpInputs = document.getElementById('lp-inputs');
+  const mcInputs = document.getElementById('mc-inputs');
+  const hvacInputs = document.getElementById('hvac-panel-inputs');
+  const hvacModeWrap = document.getElementById('hvac-mode-wrap');
+  const motorsInputs = document.getElementById('motors-panel-inputs');
+  const motorsModeWrap = document.getElementById('motors-mode-wrap');
+
+  if (panelType === 'lighting' || panelType === 'power') {
+    if (lpInputs) lpInputs.style.display = 'block';
+    if (mcInputs) mcInputs.style.display = 'none';
+    if (hvacInputs) hvacInputs.style.display = 'none';
+    if (hvacModeWrap) hvacModeWrap.style.display = 'none';
+    if (motorsInputs) motorsInputs.style.display = 'none';
+    if (motorsModeWrap) motorsModeWrap.style.display = 'none';
+  } else if (panelType === 'motors') {
+    if (lpInputs) lpInputs.style.display = 'none';
+    if (hvacInputs) hvacInputs.style.display = 'none';
+    if (hvacModeWrap) hvacModeWrap.style.display = 'none';
+    if (motorsModeWrap) motorsModeWrap.style.display = 'block';
+    if (motorsCalcMode === 'panel') {
+      if (mcInputs) mcInputs.style.display = 'none';
+      if (motorsInputs) motorsInputs.style.display = 'block';
+    } else {
+      if (mcInputs) mcInputs.style.display = 'block';
+      if (motorsInputs) motorsInputs.style.display = 'none';
+      if (boardRows.length === 0) addBoardRow();
+    }
+  } else if (panelType === 'ac') {
+    if (lpInputs) lpInputs.style.display = 'none';
+    if (motorsInputs) motorsInputs.style.display = 'none';
+    if (motorsModeWrap) motorsModeWrap.style.display = 'none';
+    if (hvacModeWrap) hvacModeWrap.style.display = 'block';
+    if (hvacCalcMode === 'panel') {
+      if (mcInputs) mcInputs.style.display = 'none';
+      if (hvacInputs) hvacInputs.style.display = 'block';
+    } else {
+      if (mcInputs) mcInputs.style.display = 'block';
+      if (hvacInputs) hvacInputs.style.display = 'none';
+      if (boardRows.length === 0) addBoardRow();
+    }
+  }
+  updatePtypeNote();
+}
+
+document.querySelectorAll('[data-ptype]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-ptype]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    panelType = btn.dataset.ptype;
+    updateBoardVisibility();
+    computeBoard();
+  });
+});
+
+function updatePtypeNote() {
+  const notes = {
+    lighting: 'Lighting / Normal panel: calculate main breaker and feeder from connected load (kVA) or real power (kW). Phase loading and demand factor can be applied.',
+    power: 'General power panel: sized from total connected load (kVA/kW) with configurable demand factor (typical 0.5–0.7) and fundamental protection verification.',
+    ac: hvacCalcMode === 'panel'
+      ? 'A/C & refrigeration panel (HVAC Panel Main Breaker Calculation): sized from Total Panel Load in kVA → 125% safety factor → Next standard breaker, with feeder cable from Elsewedy catalogue.'
+      : 'A/C & refrigeration panels (circuit schedule): sized as an NEC 430.24-style feeder — 125% of the largest unit + the sum of the rest.',
+    motors: motorsCalcMode === 'panel'
+      ? 'Motors panels / MCCs (Motors Panel Main Breaker Calculation): sized directly from Total Motors Load (kVA/kW/HP) → 125% continuous feeder factor → Next standard breaker, with feeder cable from Elsewedy catalogue and AutoCAD drawing tag.'
+      : 'Motors panels / MCCs (circuit schedule): sized as an NEC 430.24 feeder — 125% of the largest motor FLA + the sum of the rest.'
+  };
+  const el = document.getElementById('ptype-note');
+  if (el) el.innerHTML = notes[panelType];
+}
+updatePtypeNote();
+
+document.getElementById('btn-hvac-existing').addEventListener('click', () => {
+  hvacCalcMode = 'existing';
+  document.getElementById('btn-hvac-existing').classList.add('active');
+  document.getElementById('btn-hvac-panel').classList.remove('active');
+  updateBoardVisibility();
+  computeBoard();
+});
+document.getElementById('btn-hvac-panel').addEventListener('click', () => {
+  hvacCalcMode = 'panel';
+  document.getElementById('btn-hvac-panel').classList.add('active');
+  document.getElementById('btn-hvac-existing').classList.remove('active');
+  updateBoardVisibility();
+  computeBoard();
+});
+
+document.getElementById('btn-motors-existing').addEventListener('click', () => {
+  motorsCalcMode = 'existing';
+  document.getElementById('btn-motors-existing').classList.add('active');
+  document.getElementById('btn-motors-panel').classList.remove('active');
+  updateBoardVisibility();
+  computeBoard();
+});
+document.getElementById('btn-motors-panel').addEventListener('click', () => {
+  motorsCalcMode = 'panel';
+  document.getElementById('btn-motors-panel').classList.add('active');
+  document.getElementById('btn-motors-existing').classList.remove('active');
+  updateBoardVisibility();
+  computeBoard();
+});
+
+document.querySelectorAll('[data-sys]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-sys]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    systemType = btn.dataset.sys;
+    const is3P = systemType !== '1p';
+    const voltInput = document.getElementById('b-voltage');
+    voltInput.value = is3P ? 380 : 230;
+    const hpv = document.getElementById('hvac-panel-voltage');
+    if (hpv) hpv.value = voltInput.value;
+    const mpv = document.getElementById('motors-panel-voltage');
+    if (mpv) mpv.value = voltInput.value;
+    const hpp = document.getElementById('hvac-panel-phase');
+    if (hpp) hpp.value = systemType;
+    const mpp = document.getElementById('motors-panel-phase');
+    if (mpp) mpp.value = systemType;
+    computeBoard();
+  });
+});
+
+document.querySelectorAll('[data-cond]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-cond]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    conductor = btn.dataset.cond;
+    computeBoard();
+  });
+});
+document.querySelectorAll('[data-insul]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-insul]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    insulation = btn.dataset.insul;
+    computeBoard();
+  });
+});
+document.querySelectorAll('[data-form]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-form]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    cableForm = btn.dataset.form;
+    computeBoard();
+  });
+});
+document.querySelectorAll('[data-install]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-install]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    installMethod = btn.dataset.install;
+    computeBoard();
+  });
+});
+
+document.getElementById('b-voltage').addEventListener('input', (e) => {
+  const hpv = document.getElementById('hvac-panel-voltage');
+  if (hpv) hpv.value = e.target.value;
+  const mpv = document.getElementById('motors-panel-voltage');
+  if (mpv) mpv.value = e.target.value;
+  computeBoard();
+});
+
+const hpKva = document.getElementById('hvac-panel-kva');
+if (hpKva) hpKva.addEventListener('input', computeBoard);
+
+const hpVolt = document.getElementById('hvac-panel-voltage');
+if (hpVolt) hpVolt.addEventListener('input', (e) => {
+  document.getElementById('b-voltage').value = e.target.value;
+  computeBoard();
+});
+
+const hpPhase = document.getElementById('hvac-panel-phase');
+if (hpPhase) hpPhase.addEventListener('change', (e) => {
+  systemType = e.target.value;
+  document.querySelectorAll('[data-sys]').forEach(b => {
+    b.classList.toggle('active', b.dataset.sys === systemType);
+  });
+  computeBoard();
+});
+
+const mpLoad = document.getElementById('motors-panel-load');
+if (mpLoad) mpLoad.addEventListener('input', computeBoard);
+
+const mpUnit = document.getElementById('motors-panel-unit');
+if (mpUnit) mpUnit.addEventListener('change', computeBoard);
+
+const mpPf = document.getElementById('motors-panel-pf');
+if (mpPf) mpPf.addEventListener('input', computeBoard);
+
+const mpVolt = document.getElementById('motors-panel-voltage');
+if (mpVolt) mpVolt.addEventListener('input', (e) => {
+  document.getElementById('b-voltage').value = e.target.value;
+  computeBoard();
+});
+
+const mpPhase = document.getElementById('motors-panel-phase');
+if (mpPhase) mpPhase.addEventListener('change', (e) => {
+  systemType = e.target.value;
+  document.querySelectorAll('[data-sys]').forEach(b => {
+    b.classList.toggle('active', b.dataset.sys === systemType);
+  });
+  computeBoard();
+});
+
+// Configurable standard breakers
+const breakersConfig = document.getElementById('b-breakers-config');
+if (breakersConfig) {
+  breakersConfig.addEventListener('change', (e) => {
+    const list = e.target.value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n) && n > 0);
+    if (list.length > 0) {
+      list.sort((a, b) => a - b);
+      STANDARD_BREAKERS = list;
+      computeBoard();
+    }
+  });
+}
+
+// Input events for calculation inputs
+['b-kw', 'b-df', 'b-df-enable', 'b-pf', 'b-cable-length', 'b-vdrop-max', 'b-derate', 'b-isc', 'b-fclear'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener('input', computeBoard);
+    el.addEventListener('change', computeBoard);
+  }
+});
+
+const kwUnitSelect = document.getElementById('b-kw-unit');
+if (kwUnitSelect) {
+  kwUnitSelect.addEventListener('change', (e) => {
+    bKwUnit = e.target.value;
+    const badge = document.getElementById('pf-status-badge');
+    if (badge) {
+      if (bKwUnit === 'kva' || bKwUnit === 'va') {
+        badge.textContent = '(Not used for kVA — kVA is apparent power)';
+        badge.style.color = 'var(--text-dim)';
+      } else {
+        badge.textContent = '(Used for current: kVA = kW / PF)';
+        badge.style.color = 'var(--amber)';
+      }
+    }
+    computeBoard();
+  });
+}
+
+// Circuit schedule for HVAC/Motors panels (NEC 430.24)
+let boardRows = [];
+let boardRowCounter = 0;
+function addBoardRow() {
+  boardRowCounter++;
+  boardRows.push({ id: boardRowCounter, name: '', fla: 0 });
+  renderBoardRows();
+}
+function removeBoardRow(id) {
+  boardRows = boardRows.filter(r => r.id !== id);
+  renderBoardRows();
+}
+function updateBoardRow(id, field, value) {
+  const r = boardRows.find(r => r.id === id);
+  if (r) r[field] = value;
+  computeBoard();
+}
+function renderBoardRows() {
+  const container = document.getElementById('board-rows');
+  if (!container) return;
+  container.innerHTML = boardRows.map((row, idx) => `
+    <div class="load-row">
+      <div class="load-row-head">
+        <span class="tag-select" style="cursor:default;">Circuit ${idx + 1}</span>
+        <button class="remove-btn" onclick="removeBoardRow(${row.id})" type="button">Remove ✕</button>
+      </div>
+      <div class="field-grid">
+        <div class="field"><label>Label</label><input type="text" value="${row.name || ''}" placeholder="e.g. AHU-1" onchange="updateBoardRow(${row.id},'name',this.value)"></div>
+        <div class="field"><label>FLA / RLC <span class="unit">(A)</span></label><input type="number" min="0" step="0.1" value="${row.fla || ''}" onchange="updateBoardRow(${row.id},'fla',parseFloat(this.value)||0)"></div>
+      </div>
+    </div>`).join('') || `<div class="notes">No circuits yet. Click "Add circuit" to start.</div>`;
+  computeBoard();
+}
+const addRowBtn = document.getElementById('add-board-row-btn');
+if (addRowBtn) addRowBtn.addEventListener('click', addBoardRow);
+
+function coreCountFor(system) {
+  return system === '1p' ? 2 : (system === '3pn' ? 4 : 3);
+}
+function cableTableKey() {
+  const cores = coreCountFor(systemType);
+  const ins = insulation || 'xlpe';
+  if (cableForm === 'single') return `${conductor}_${ins}_1core`;
+  const armour = cableForm === 'armoured' ? 'armoured' : 'unarmoured';
+  return `${conductor}_${ins}_${cores}core_${armour}`;
+}
+
+// ===================================================================
+// CENTRAL COMPUTE BOARD FUNCTION
+// ===================================================================
+function computeBoard() {
+  const out = document.getElementById('b-out');
+  if (!out) return;
+
+  const is3Phase = systemType !== '1p';
+  const V = num('b-voltage') || (is3Phase ? 380 : 230);
+  const lengthM = num('b-cable-length') || 30;
+  const maxDropPct = num('b-vdrop-max') || (panelType === 'lighting' ? 3.0 : 5.0);
+  const Ktotal = applyCorrectionFactors(num('b-derate') || 0.80);
+
+  let rawLoad = 0;
+  let unit = 'kva';
+  let pf = 0.9;
+  let demandFactor = 1.0;
+  let isDemandEnabled = false;
+  let panelTitle = 'Panel Calculation Result';
+  let isCircuitSchedule = false;
+  let scheduleDesignCurrent = 0;
+
+  if (panelType === 'lighting') {
+    panelTitle = 'Lighting / Normal Panel Calculation Result';
+    rawLoad = num('b-kw');
+    unit = bKwUnit || 'kva';
+    pf = num('b-pf') || 0.9;
+    demandFactor = num('b-df') || 1.0;
+    const dfBox = document.getElementById('b-df-enable');
+    isDemandEnabled = dfBox ? dfBox.checked : (demandFactor < 1.0);
+  } else if (panelType === 'power') {
+    panelTitle = 'General Power Panel Calculation Result';
+    rawLoad = num('b-kw');
+    unit = bKwUnit || 'kva';
+    pf = num('b-pf') || 0.9;
+    demandFactor = num('b-df') || 1.0;
+    const dfBox = document.getElementById('b-df-enable');
+    isDemandEnabled = dfBox ? dfBox.checked : (demandFactor < 1.0);
+  } else if (panelType === 'ac') {
+    if (hvacCalcMode === 'panel') {
+      panelTitle = 'HVAC Panel Main Breaker & Cable Sizing Result';
+      rawLoad = num('hvac-panel-kva');
+      unit = 'kva';
+      pf = 0.9;
+      demandFactor = 1.0;
+      isDemandEnabled = false;
+    } else {
+      isCircuitSchedule = true;
+      panelTitle = 'A/C Panel Circuit Schedule Sizing Result (NEC 430.24)';
+    }
+  } else if (panelType === 'motors') {
+    if (motorsCalcMode === 'panel') {
+      panelTitle = 'Motors Panel (MCC) Main Breaker & Cable Sizing Result';
+      rawLoad = num('motors-panel-load');
+      const uEl = document.getElementById('motors-panel-unit');
+      unit = uEl ? uEl.value : 'kva';
+      pf = num('motors-panel-pf') || 0.85;
+      demandFactor = 1.0;
+      isDemandEnabled = false;
+    } else {
+      isCircuitSchedule = true;
+      panelTitle = 'Motors Panel (MCC) Circuit Schedule Sizing Result (NEC 430.24)';
+    }
+  }
+
+  // 1. Calculate Design Current Ib
+  let calc;
+  let Ib = 0;
+
+  if (isCircuitSchedule) {
+    if (boardRows.length === 0) {
+      out.innerHTML = `<div class="notes">Add at least one circuit to size this panel.</div>`;
+      return;
+    }
+    const sumFla = boardRows.reduce((s, r) => s + (r.fla || 0), 0);
+    const largest = boardRows.reduce((a, b) => ((b.fla || 0) > (a.fla || 0) ? b : a), { fla: 0, name: '' });
+    scheduleDesignCurrent = 1.25 * (largest.fla || 0) + (sumFla - (largest.fla || 0));
+    Ib = scheduleDesignCurrent;
+    calc = {
+      connectedKva: (Ib * (is3Phase ? Math.sqrt(3) * V : V)) / 1000,
+      demandKva: (Ib * (is3Phase ? Math.sqrt(3) * V : V)) / 1000,
+      demandResult: { connectedLoad: 0, demandLoad: 0, factor: 1.0, isApplied: false },
+      isPfUsed: false,
+      pf: 0.85,
+      voltage: V,
+      is3Phase: is3Phase,
+      Ib: Ib,
+      formulaStr: `1.25 × largest (${fmt(largest.fla || 0)} A) + rest of circuits`
+    };
+  } else {
+    calc = calculateDesignCurrent(rawLoad, unit, V, is3Phase, pf, demandFactor, isDemandEnabled);
+    Ib = calc.Ib;
+  }
+
+  // 2. Required Breaker & Selected Standard Breaker
+  const I_required = calculateRequiredBreaker(Ib, 1.25);
+  const In = selectStandardBreaker(I_required, STANDARD_BREAKERS);
+
+  // 3. Required Cable Ampacity & Selection from Elsewedy Catalogue
+  const Iz_required = calculateCableRequirement(In, Ktotal);
+  const tableKey = cableTableKey();
+  const cores = coreCountFor(systemType);
+  const numRunsInConduit = cableForm === 'single' ? cores : 1;
+
+  const cableResult = selectCableWithVdrop(tableKey, Iz_required, installMethod, lengthM, Ib, V, is3Phase, conductor, insulation, pf, maxDropPct);
+  const cable = cableResult ? cableResult.cable : null;
+  const vDrop = cableResult ? cableResult.vDrop : calculateVoltageDrop(16, lengthM, Ib, V, is3Phase, conductor, insulation, pf, maxDropPct);
+
+  const Iz_corrected = cable ? (cable.ampacity * Ktotal) : 0;
+
+  // 4. Fundamental Protection Check: Ib <= In <= Iz
+  const protCheck = checkProtection(Ib, In, Iz_corrected);
+
+  // 5. Short-Circuit Check
+  const Isc_kA = num('b-isc');
+  const timeSec = num('b-fclear') || 0.1;
+  const scCheck = checkShortCircuit(cable ? cable.size : 0, Isc_kA, timeSec, conductor, insulation);
+
+  // 6. Conduit Sizing
+  const conduitResult = cable ? selectConduit(cable.dia, numRunsInConduit) : null;
+
+  // 7. Neutral, Earth & AutoCAD Tag
+  const cadTag = generateCableTag(cable, cores, conductor, cableForm, insulation, systemType);
+
+  const phaseLabel = is3Phase ? '3 Phase' : '1 Phase';
+  const phaseDetail = is3Phase ? (systemType === '3pn' ? '3 Phase (3P+N)' : '3 Phase (3P)') : '1 Phase (1P+N)';
+  const cableDesc = cable ? getCableDescription(cable, cores, conductor, cableForm) : 'No catalogue cable meets required ampacity';
+  const installLabel = installMethod === 'ground' ? 'Direct buried / laid in ground' : installMethod === 'duct' ? 'Laid in duct' : 'Laid in free air (shaded)';
+  const unitLabel = B_KW_UNIT_LABELS[unit] || unit.toUpperCase();
+
+  // RENDER RESULTS
+  let html = `<div class="result-hero">
+    <div class="hero-box"><div class="lbl">Design current (Ib)</div><div class="val">${fmt(Ib)}<span class="u"> A</span></div></div>
+    <div class="hero-box"><div class="lbl">Selected breaker (In)</div><div class="val">${In}<span class="u"> A</span></div></div>
+    <div class="hero-box"><div class="lbl">Selected cable</div><div class="val">${cable ? fmt(cable.size) : '—'}<span class="u"> mm²</span></div></div>
+    <div class="hero-box"><div class="lbl">Voltage drop</div><div class="val" style="color:${vDrop.pass ? '#20e8a2' : 'var(--danger)'};">${fmt(vDrop.dropPct)}<span class="u"> %</span></div></div>
+  </div>`;
+
+  // AutoCAD / SLD Drawing Cable Tag Card
+  if (cable) {
+    html += `<div class="card" style="background:rgba(20,24,33,0.95);border:1.5px solid var(--teal);margin:16px 0;box-shadow:0 4px 20px rgba(0,0,0,0.35);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--teal);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;display:flex;align-items:center;gap:6px;">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);"></span>
+          AutoCAD / SLD Drawing Cable Tag
+        </div>
+        <button onclick="copyCadTag()" type="button" class="btn" style="padding:5px 14px;font-size:12px;background:var(--teal);color:#0a0d14;font-weight:700;border:none;border-radius:4px;cursor:pointer;">
+          📋 Copy Tag
+        </button>
+      </div>
+      <div id="cad-tag-display" style="background:#0c1017;padding:14px 16px;border-radius:6px;border:1px solid rgba(0,210,180,0.3);font-family:'Courier New',Courier,monospace;font-size:16px;line-height:1.6;color:#20e8a2;white-space:pre-wrap;letter-spacing:0.5px;font-weight:600;">${cadTag.full}</div>
+      <div style="margin-top:10px;font-size:12px;color:var(--text-dim);display:flex;gap:16px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;">
+        <span>Phase: <strong style="color:var(--text);">${cable.size} mm²</strong></span>
+        ${systemType === '3pn' ? `<span>Reduced Neutral: <strong style="color:var(--text);">${cadTag.neutralSize} mm²</strong></span>` : ''}
+        <span>Earth (ECC): <strong style="color:var(--text);">${cadTag.eccSize} mm²</strong></span>
+        <span>Insulation: <strong style="color:var(--text);">${(insulation || 'xlpe').toUpperCase()}</strong></span>
+      </div>
+    </div>`;
+  }
+
+  // Section 19 Exact Calculation Sequence
+  html += `<div class="card" style="background:var(--panel-2);border-left:4px solid var(--amber);margin:16px 0;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--teal);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;font-weight:700;">
+      ${panelTitle}
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:14.5px;line-height:2.1;color:var(--text);">
+      <div>CONNECTED LOAD = <strong>${fmt(calc.connectedKva)} kVA</strong>${calc.isPfUsed ? ` <span style="font-size:12px;color:var(--text-dim);">(entered as ${fmt(rawLoad)} ${unitLabel}, PF ${fmt(calc.pf)})</span>` : ''}</div>
+      <div>SYSTEM = <strong>${phaseLabel}</strong> <span style="font-size:12px;color:var(--text-dim);">(${phaseDetail})</span></div>
+      <div>VOLTAGE = <strong>${fmt(calc.voltage)} V</strong></div>
+      <div>DEMAND FACTOR = <strong>${calc.demandResult.isApplied ? `${fmt(calc.demandResult.factor)} (Applied → Demand Load: ${fmt(calc.demandKva)} kVA)` : '1.00 (Not applied)'}</strong></div>
+      <div>DESIGN CURRENT (Ib) = <strong>${calc.formulaStr} = ${fmt(Ib)} A</strong></div>
+      <div>REQUIRED BREAKER = <strong>${fmt(Ib)} × 1.25 = ${fmt(I_required)} A</strong></div>
+      <div style="color:var(--amber);font-size:16px;font-weight:700;">SELECTED BREAKER (In) = <strong>${In} A</strong></div>
+      <div style="margin:10px 0;border-top:1px dashed var(--grid);"></div>
+      <div>CABLE CORRECTION FACTOR (K_total) = <strong>${fmt(Ktotal)}</strong></div>
+      <div>REQUIRED CATALOGUE AMPACITY = <strong>${In} / ${fmt(Ktotal)} = ${fmt(Iz_required)} A</strong></div>
+      <div style="color:var(--teal);font-weight:700;">SELECTED CABLE = <strong>${cableDesc}</strong></div>
+      <div>CATALOGUE AMPACITY = <strong>${cable ? fmt(cable.ampacity) : '—'} A</strong></div>
+      <div>CORRECTED CABLE AMPACITY (Iz) = <strong>${cable ? fmt(cable.ampacity) : 0} × ${fmt(Ktotal)} = ${fmt(Iz_corrected)} A</strong></div>
+      <div style="font-weight:700;color:${protCheck.pass ? '#20e8a2' : 'var(--danger)'};">
+        PROTECTION CHECK (Ib ≤ In ≤ Iz): <strong>${fmt(Ib)} ≤ ${In} ≤ ${fmt(Iz_corrected)} → [${protCheck.pass ? 'PASS' : 'FAIL'}]</strong>
+      </div>
+      <div style="margin:10px 0;border-top:1px dashed var(--grid);"></div>
+      <div>VOLTAGE DROP = <strong>${cable ? `${fmt(vDrop.dropV)} V (${fmt(vDrop.dropPct)}%) ≤ ${fmt(vDrop.maxDropPct)}%` : '—'}</strong> <span style="font-weight:700;color:${vDrop.pass ? '#20e8a2' : 'var(--danger)'};">[${vDrop.pass ? 'PASS' : 'FAIL'}]</span>${cableResult && cableResult.steppedUp ? `<div style="font-size:12.5px;color:var(--teal);margin-top:2px;">* Cable stepped up from ${cableResult.ampacitySelected.size} mm² to ${cable.size} mm² to satisfy voltage drop limit.</div>` : ''}</div>
+      <div>SHORT-CIRCUIT CHECK = <strong>${scCheck.available ? (scCheck.pass ? `PASS (S = ${cable.size} mm² ≥ S_min = ${fmt(scCheck.S_min)} mm²)` : `FAIL (S = ${cable.size} mm² < S_min = ${fmt(scCheck.S_min)} mm²)`) : 'Short-circuit verification requires additional input data.'}</strong></div>
+      <div>FEEDER CONDUIT = <strong>${conduitResult ? `${conduitResult.size} mm PVC (Fill: ${fmt(conduitResult.fillPct)}% ≤ 40%)` : '—'}</strong></div>
+      <div>EARTH / ECC = <strong>${cable ? `${cadTag.eccSize} mm² Cu/PVC ECC` : '—'}</strong></div>
+    </div>
+  </div>`;
+
+  // Detailed Meters
+  html += meter('Design current (Ib)', Ib, is3Phase ? `Ib = (S × 1000) / (√3 × V) = (${fmt(calc.demandKva)} × 1000) / (1.732 × ${fmt(V)})` : `Ib = (S × 1000) / V = (${fmt(calc.demandKva)} × 1000) / ${fmt(V)}`);
+  html += meter('Required breaker current', I_required, `Ib × 1.25 = ${fmt(Ib)} × 1.25 = ${fmt(I_required)} A.`);
+  html += meter('Selected main breaker (In)', In, `Smallest standard breaker ≥ ${fmt(I_required)} A from standard breakers list.`, 'A');
+  html += meter('Cable correction factor', Ktotal, 'Iz_required = In / K_total.', '');
+  html += meter('Required catalogue ampacity', Iz_required, `Selected Breaker ÷ ${fmt(Ktotal)} = ${In} ÷ ${fmt(Ktotal)}.`);
+
+  if (cable) {
+    html += meter('Selected cable size', `${cable.size} mm²`, cableDesc, '');
+    html += meter('Catalogue ampacity', cable.ampacity, `${installLabel} — Elsewedy Cables 0.6/1kV LV catalogue rating.`);
+    html += meter('Corrected ampacity (Iz)', Iz_corrected, `Catalogue ampacity × ${fmt(Ktotal)} = ${fmt(cable.ampacity)} × ${fmt(Ktotal)}.`);
+    html += meter('Voltage drop (at ' + lengthM + ' m)', `${fmt(vDrop.dropPct)}%`, `ΔV = ${fmt(vDrop.dropV)} V across ${lengthM} meters (Max permitted: ${fmt(vDrop.maxDropPct)}%). Status: ${vDrop.pass ? 'PASS' : 'FAIL'}.`, '');
+    if (conduitResult) {
+      html += meter('Selected feeder conduit', conduitResult.size, `Smallest standard PVC conduit keeping fill ≤ 40% (fill: ${fmt(conduitResult.fillPct)}%).`, 'mm');
+    }
+  } else {
+    html += `<div class="warn">No matching Elsewedy catalogue cable found for this configuration meeting required ampacity of ${fmt(Iz_required)} A when ${installLabel.toLowerCase()}.</div>`;
+  }
+
+  html += notesBlock([
+    `System: ${systemType === '1p' ? 'Single-phase, 230V (L+N)' : systemType === '3pn' ? 'Three-phase + neutral, 380V (3L+N)' : 'Three-phase, 380V, no neutral (3L)'}. Selected voltage: ${fmt(V)} V.`,
+    `When input is kVA, Power Factor is NOT used for current calculation (kVA is apparent power).`,
+    `Demand factor is only applied when enabled or set below 1.0.`,
+    `Breaker sizing rule: I_required = Ib × 1.25, then next standard breaker rating In ≥ I_required.`,
+    `Fundamental protection rule verified: Ib (${fmt(Ib)} A) ≤ In (${In} A) ≤ Iz (${fmt(Iz_corrected)} A).`,
+    `Voltage drop verified across ${lengthM} m: ${fmt(vDrop.dropPct)}% (limit ${fmt(vDrop.maxDropPct)}%). If voltage drop limit was exceeded, the cable was automatically stepped up to the next size.`,
+    'Cable ampacities and diameters are from the Elsewedy Cables 0.6/1(1.2)kV LV catalogue (single circuit, standard laying).'
+  ]);
+
+  out.innerHTML = html;
+}
+computeBoard();
+</script>
+</body>
+</html>

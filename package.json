@@ -1,0 +1,31 @@
+{
+  "name": "panel-analyzer-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "npm run test --workspace=@panel-analyzer/engine",
+    "build": "npm run build --workspaces",
+    "start": "npm run start --workspace=@panel-analyzer/desktop"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.2.1",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "better-sqlite3": "^11.8.1",
+    "electron": "^34.2.0",
+    "typescript": "^5.8.0",
+    "vite": "^7.3.7",
+    "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "lucide-react": "^0.475.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StandardsReferenceData",
+  "description": "Standard circuit breakers, conduit dimensions, reduced neutral, and ECC conductor lookups",
+  "type": "object",
+  "properties": {
+    "breakers": {
+      "type": "array",
+      "items": { "type": "number" },
+      "description": "Standard circuit breaker ratings in Amperes"
+    },
+    "conduits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "size": { "type": "number", "description": "Nominal trade size in mm" },
+          "id": { "type": "number", "description": "Internal diameter in mm" }
+        },
+        "required": ["size", "id"]
+      }
+    },
+    "maxConduitFill": {
+      "type": "number",
+      "description": "Maximum allowable conduit fill ratio (default 0.40 = 40%)"
+    },
+    "reducedNeutral": {
+      "type": "object",
+      "description": "Mapping from phase cross-section to reduced neutral cross-section in mm2",
+      "patternProperties": {
+        "^[0-9]+$": { "type": "number" }
+      }
+    },
+    "standardEcc": {
+      "type": "object",
+      "description": "Mapping from phase cross-section to standard earth continuity conductor (ECC) in mm2",
+      "patternProperties": {
+        "^[0-9]+(\\.[0-9]+)?$": { "type": "number" }
+      }
+    }
+  },
+  "required": ["breakers", "conduits", "maxConduitFill", "reducedNeutral", "standardEcc"],
+  "additionalProperties": false
+}
